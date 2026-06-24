@@ -1,0 +1,69 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Ecclessia Manager{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if debug %}
+    <script src="https://cdn.tailwindcss.com"></script>
+  {% endif %}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-ecclesia-wash text-ecclesia-ink antialiased">
+  <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
+    {% if user.is_authenticated %}
+      <aside class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-ecclesia-line bg-white transition-transform lg:static lg:translate-x-0"
+             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+        <div class="flex h-16 items-center border-b border-ecclesia-line px-5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-ecclesia-green text-sm font-bold text-white">EM</div>
+          <div class="ml-3">
+            <p class="text-sm font800 font-extrabold">Ecclessia Manager</p>
+            <p class="text-xs text-ecclesia-muted">Gestion des extensions</p>
+          </div>
+        </div>
+        <nav class="space-y-6 px-3 py-5 text-sm">
+          <div>
+            <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">General</p>
+            <a class="block rounded-md px-3 py-2 font-medium hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-900/10" href="{% url 'dashboard:home' %}">Tableau de bord</a>
+            <a class="block rounded-md px-3 py-2 font-medium hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-900/10" href="{% url 'reports:list' %}">Rapports</a>
+            <a class="block rounded-md px-3 py-2 font-medium hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-900/10" href="{% url 'reports:create' %}">Nouveau rapport</a>
+            {% if user.profile.role == "admin" %}
+              <a class="block rounded-md px-3 py-2 font-medium hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-900/10" href="{% url 'churches:list' %}">Extensions</a>
+            {% endif %}
+          </div>
+        </nav>
+      </aside>
+    {% endif %}
+
+    <main class="min-w-0 flex-1">
+      {% if user.is_authenticated %}
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ecclesia-line bg-white/95 px-4 backdrop-blur lg:px-8">
+          <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-md border border-ecclesia-line lg:hidden" @click="sidebarOpen = true" aria-label="Ouvrir le menu">
+            <span class="h-0.5 w-5 bg-gray-900"></span>
+          </button>
+          <div>
+            <p class="text-sm font-semibold">{{ user.get_full_name|default:user.username }}</p>
+            <p class="text-xs text-ecclesia-muted">{{ user.profile.get_role_display }}</p>
+          </div>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn-secondary" type="submit">Deconnexion</button>
+          </form>
+        </header>
+      {% endif %}
+
+      <div class="{% if user.is_authenticated %}p-4 lg:p-8{% endif %}">
+        {% for message in messages %}
+          <div class="mb-4 rounded-md border border-ecclesia-line bg-white px-4 py-3 text-sm">{{ message }}</div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>

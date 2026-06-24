@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Nouveau rapport - Ecclessia Manager{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-extrabold">Nouveau rapport</h1>
+  <p class="mt-1 text-sm text-ecclesia-muted">Saisie du culte, des presences, des offrandes et des depenses.</p>
+</div>
+
+<form method="post" class="space-y-5" x-data>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <section class="rounded-lg border border-ecclesia-line bg-white p-5 shadow-sm">
+    <h2 class="font-bold">Culte</h2>
+    <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {% for field in form %}
+        {% if field.name == "extension" or field.name == "service_type" or field.name == "service_date" or field.name == "preacher" or field.name == "theme" %}
+          <div {% if field.name == "theme" %}class="xl:col-span-2"{% endif %}>
+            <label class="mb-1 block text-sm font-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<p class="mt-1 text-sm text-red-700">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rounded-lg border border-ecclesia-line bg-white p-5 shadow-sm">
+    <h2 class="font-bold">Effectif</h2>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {% for field in form %}
+        {% if field.name == "men_count" or field.name == "women_count" or field.name == "children_count" or field.name == "visitors_count" %}
+          <div>
+            <label class="mb-1 block text-sm font-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<p class="mt-1 text-sm text-red-700">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rounded-lg border border-ecclesia-line bg-white p-5 shadow-sm">
+    <h2 class="font-bold">Finances</h2>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {% for field in form %}
+        {% if field.name == "offering_regular" or field.name == "offering_preacher" or field.name == "offering_tithe" or field.name == "offering_thanksgiving" or field.name == "extra_income" or field.name == "expenses" %}
+          <div>
+            <label class="mb-1 block text-sm font-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<p class="mt-1 text-sm text-red-700">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rounded-lg border border-ecclesia-line bg-white p-5 shadow-sm">
+    <label class="mb-1 block text-sm font-semibold" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+    {{ form.notes }}
+    {% for error in form.notes.errors %}<p class="mt-1 text-sm text-red-700">{{ error }}</p>{% endfor %}
+  </section>
+
+  <div class="flex gap-3">
+    <button class="btn-primary" type="submit">Enregistrer le rapport</button>
+    <a class="btn-secondary" href="{% url 'reports:list' %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

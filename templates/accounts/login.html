@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Connexion - Ecclessia Manager{% endblock %}
+{% block content %}
+<div class="grid min-h-screen bg-ecclesia-wash lg:grid-cols-[1fr_520px]">
+  <section class="hidden items-end bg-ecclesia-green p-12 text-white lg:flex">
+    <div class="max-w-xl">
+      <p class="text-sm font-semibold uppercase tracking-wide text-green-100">Emerge in Christ</p>
+      <h1 class="mt-4 text-5xl font-extrabold leading-tight">Rapports, finances et suivi pastoral dans un seul espace.</h1>
+      <p class="mt-5 text-lg text-green-50">Un outil sobre pour les administrateurs et les extensions: saisie rapide, donnees centralisees et indicateurs fiables.</p>
+    </div>
+  </section>
+  <section class="flex items-center justify-center p-6">
+    <form method="post" class="w-full max-w-sm rounded-lg border border-ecclesia-line bg-white p-6 shadow-sm">
+      {% csrf_token %}
+      <div class="mb-6">
+        <div class="flex h-11 w-11 items-center justify-center rounded-md bg-ecclesia-green text-sm font-bold text-white">EM</div>
+        <h2 class="mt-5 text-2xl font-extrabold">Connexion</h2>
+        <p class="mt-1 text-sm text-ecclesia-muted">Accedez a votre tableau de bord.</p>
+      </div>
+      {% if form.errors %}
+        <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">Identifiants invalides.</div>
+      {% endif %}
+      <label class="block text-sm font-semibold" for="{{ form.username.id_for_label }}">Nom utilisateur</label>
+      <div class="mt-1">{{ form.username }}</div>
+      <label class="mt-4 block text-sm font-semibold" for="{{ form.password.id_for_label }}">Mot de passe</label>
+      <div class="mt-1">{{ form.password }}</div>
+      <button class="btn-primary mt-6 w-full" type="submit">Se connecter</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

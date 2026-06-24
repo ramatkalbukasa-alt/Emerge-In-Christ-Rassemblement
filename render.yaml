@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ecclessia-manager
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput"
+    startCommand: "python manage.py migrate && gunicorn ecclessia_manager.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: ecclessia_manager.settings
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ecclessia-manager-db
+          property: connectionString
+
+databases:
+  - name: ecclessia-manager-db
+    plan: free
