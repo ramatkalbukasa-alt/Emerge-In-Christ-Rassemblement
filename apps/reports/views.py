@@ -1,12 +1,157 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
+import csv
+from io import BytesIO
 
-from apps.accounts.models import UserProfile
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 
 from .forms import ServiceReportForm
 from .permissions import reports_for_user, user_extension, user_is_admin
 from .models import ServiceReport
 from .realtime import publish_report_created
+
+
+def _report_filename(report, extension):
+    date_part = report.service_date.isoformat()
+    slug = report.extension.slug
+    return f"rapport-{slug}-{date_part}.{extension}"
+
+
+def _money(value):
+    return f"{value:.2f}"
+
+
+def _report_rows(report):
+    return [
+        ("Extension", report.extension.name),
+        ("Date", report.service_date),
+        ("Type", report.get_service_type_display()),
+        ("Predicateur", report.preacher or ""),
+        ("Theme", report.theme or ""),
+        ("Hommes", report.men_count),
+        ("Femmes", report.women_count),
+        ("Enfants", report.children_count),
+        ("Visiteurs", report.visitors_count),
+        ("Presence totale", report.total_attendance),
+        ("Offrandes ordinaires", _money(report.offering_regular)),
+        ("Offrande orateur", _money(report.offering_preacher)),
+        ("Dimes", _money(report.offering_tithe)),
+        ("Actions de grace", _money(report.offering_thanksgiving)),
+        ("Recettes supplementaires", _money(report.extra_income)),
+        ("Depenses", _money(report.expenses)),
+        ("Total offrandes", _money(report.total_offerings)),
+        ("Ventilation dimes", _money(report.tithe_deduction)),
+        ("Ventilation sociale", _money(report.social_deduction)),
+        ("Solde net", _money(report.net_balance)),
+        ("Notes", report.notes or ""),
+    ]
+
+
+def _export_report_csv(report):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{_report_filename(report, "csv")}"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    writer.writerow(["Champ", "Valeur"])
+    writer.writerows(_report_rows(report))
+    return response
+
+
+def _export_report_docx(report):
+    from docx import Document
+
+    document = Document()
+    document.add_heading(f"Rapport - {report.extension.name}", level=1)
+    document.add_paragraph(f"{report.get_service_type_display()} du {report.service_date}")
+
+    table = document.add_table(rows=1, cols=2)
+    table.style = "Table Grid"
+    table.rows[0].cells[0].text = "Champ"
+    table.rows[0].cells[1].text = "Valeur"
+    for label, value in _report_rows(report):
+        cells = table.add_row().cells
+        cells[0].text = str(label)
+        cells[1].text = str(value)
+
+    buffer = BytesIO()
+    document.save(buffer)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{_report_filename(report, "docx")}"'
+    return response
+
+
+def _export_report_pdf(report):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle, Paragraph
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(buffer, pagesize=A4, title=f"Rapport {report.extension.name}")
+    styles = getSampleStyleSheet()
+    rows = [["Champ", "Valeur"], *[[label, str(value)] for label, value in _report_rows(report)]]
+    table = Table(rows, colWidths=[170, 330])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F2937")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+            ]
+        )
+    )
+    story = [
+        Paragraph(f"Rapport - {report.extension.name}", styles["Title"]),
+        Paragraph(f"{report.get_service_type_display()} du {report.service_date}", styles["Normal"]),
+        Spacer(1, 18),
+        table,
+    ]
+    document.build(story)
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{_report_filename(report, "pdf")}"'
+    return response
+
+
+def _export_reports_csv(reports):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="rapports.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Date",
+            "Extension",
+            "Type",
+            "Presence",
+            "Offrandes",
+            "Dimes",
+            "Social",
+            "Depenses",
+            "Solde",
+        ]
+    )
+    for report in reports:
+        writer.writerow(
+            [
+                report.service_date,
+                report.extension.name,
+                report.get_service_type_display(),
+                report.total_attendance,
+                _money(report.total_offerings),
+                _money(report.tithe_deduction),
+                _money(report.social_deduction),
+                _money(report.expenses),
+                _money(report.net_balance),
+            ]
+        )
+    return response
 
 
 @login_required
@@ -19,6 +164,37 @@ def report_list(request):
 def report_detail(request, pk):
     report = get_object_or_404(reports_for_user(request.user), pk=pk)
     return render(request, "reports/report_detail.html", {"report": report})
+
+
+@login_required
+def report_print(request, pk):
+    report = get_object_or_404(reports_for_user(request.user), pk=pk)
+    return render(request, "reports/report_print.html", {"report": report})
+
+
+@login_required
+def report_export(request, pk, file_format):
+    report = get_object_or_404(reports_for_user(request.user), pk=pk)
+    exporters = {
+        "csv": _export_report_csv,
+        "docx": _export_report_docx,
+        "pdf": _export_report_pdf,
+    }
+    exporter = exporters.get(file_format)
+    if exporter is None:
+        return redirect("reports:detail", pk=report.pk)
+    return exporter(report)
+
+
+@login_required
+def reports_export(request, file_format):
+    reports = reports_for_user(request.user)
+    if file_format == "csv":
+        return _export_reports_csv(reports)
+    if file_format == "html":
+        html = render_to_string("reports/report_collection_print.html", {"reports": reports}, request=request)
+        return HttpResponse(html)
+    return redirect("reports:list")
 
 
 @login_required

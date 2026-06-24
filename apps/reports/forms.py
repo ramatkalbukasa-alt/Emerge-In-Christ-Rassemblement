@@ -7,10 +7,7 @@ class ServiceReportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.setdefault(
-                "class",
-                "w-full rounded-md border-gray-300 text-sm focus:border-ecclesia-green focus:ring-ecclesia-green",
-            )
+            field.widget.attrs.setdefault("class", "form-control")
 
     class Meta:
         model = ServiceReport
@@ -42,10 +39,7 @@ class NewConvertForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.setdefault(
-                "class",
-                "w-full rounded-md border-gray-300 text-sm focus:border-ecclesia-green focus:ring-ecclesia-green",
-            )
+            field.widget.attrs.setdefault("class", "form-control")
 
     class Meta:
         model = NewConvert

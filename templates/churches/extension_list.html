@@ -3,16 +3,17 @@
 {% block content %}
 <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <h1 class="text-2xl font-extrabold">Extensions</h1>
+    <p class="deco-kicker">II. Administration</p>
+    <h1 class="deco-heading mt-2">Extensions</h1>
     <p class="mt-1 text-sm text-ecclesia-muted">Sites locaux, responsables et devise de gestion.</p>
   </div>
   <a class="btn-primary" href="{% url 'churches:create' %}">Ajouter</a>
 </div>
 
-<section class="overflow-hidden rounded-lg border border-ecclesia-line bg-white shadow-sm">
+<section class="deco-panel overflow-hidden">
   <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-ecclesia-line text-sm">
-      <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <table class="deco-table">
+      <thead>
         <tr>
           <th class="px-4 py-3">Extension</th>
           <th class="px-4 py-3">Ville</th>
@@ -22,12 +23,12 @@
           <th class="px-4 py-3"></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-ecclesia-line">
+      <tbody>
         {% for extension in extensions %}
           <tr>
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
-                <span class="h-3 w-3 rounded-full" style="background: {{ extension.color }}"></span>
+                <span class="h-3 w-3 rotate-45 border border-ecclesia-gold" style="background: {{ extension.color }}"></span>
                 <span class="font-semibold">{{ extension.name }}</span>
               </div>
             </td>
@@ -35,7 +36,7 @@
             <td class="px-4 py-3">{{ extension.pastor_name }}</td>
             <td class="px-4 py-3">{{ extension.currency }}</td>
             <td class="px-4 py-3">{% if extension.is_active %}Active{% else %}Suspendue{% endif %}</td>
-            <td class="px-4 py-3 text-right"><a class="font-semibold text-ecclesia-green" href="{% url 'churches:update' extension.slug %}">Modifier</a></td>
+            <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'churches:update' extension.slug %}">Modifier</a></td>
           </tr>
         {% empty %}
           <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="6">Aucune extension creee.</td></tr>

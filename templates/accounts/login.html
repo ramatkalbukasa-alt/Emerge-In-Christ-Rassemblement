@@ -2,27 +2,29 @@
 {% block title %}Connexion - Ecclessia Manager{% endblock %}
 {% block content %}
 <div class="grid min-h-screen bg-ecclesia-wash lg:grid-cols-[1fr_520px]">
-  <section class="hidden items-end bg-ecclesia-green p-12 text-white lg:flex">
-    <div class="max-w-xl">
-      <p class="text-sm font-semibold uppercase tracking-wide text-green-100">Emerge in Christ</p>
-      <h1 class="mt-4 text-5xl font-extrabold leading-tight">Rapports, finances et suivi pastoral dans un seul espace.</h1>
-      <p class="mt-5 text-lg text-green-50">Un outil sobre pour les administrateurs et les extensions: saisie rapide, donnees centralisees et indicateurs fiables.</p>
+  <section class="relative hidden items-end overflow-hidden border-r border-ecclesia-gold/30 bg-ecclesia-black p-12 text-ecclesia-cream lg:flex">
+    <div aria-hidden="true" class="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.22),transparent_30rem)]"></div>
+    <div aria-hidden="true" class="absolute left-1/2 top-0 h-full w-px bg-ecclesia-gold/20"></div>
+    <div class="relative max-w-2xl">
+      <div class="deco-divider"><span class="deco-kicker">Emerge in Christ</span></div>
+      <h1 class="mt-4 font-display text-6xl uppercase leading-tight tracking-[0.2em]">Rassemblement</h1>
+      <p class="mt-5 max-w-xl text-lg leading-relaxed text-ecclesia-muted">Rapports, finances et suivi pastoral dans un espace structure, luxueux et precis.</p>
     </div>
   </section>
   <section class="flex items-center justify-center p-6">
-    <form method="post" class="w-full max-w-sm rounded-lg border border-ecclesia-line bg-white p-6 shadow-sm">
+    <form method="post" class="deco-card w-full max-w-sm p-7">
       {% csrf_token %}
       <div class="mb-6">
-        <div class="flex h-11 w-11 items-center justify-center rounded-md bg-ecclesia-green text-sm font-bold text-white">EM</div>
-        <h2 class="mt-5 text-2xl font-extrabold">Connexion</h2>
-        <p class="mt-1 text-sm text-ecclesia-muted">Accedez a votre tableau de bord.</p>
+        <div class="deco-diamond"><span>EM</span></div>
+        <h2 class="mt-6 font-display text-3xl uppercase tracking-[0.22em] text-ecclesia-cream">Connexion</h2>
+        <p class="mt-2 text-sm text-ecclesia-muted">Accedez a votre tableau de bord.</p>
       </div>
       {% if form.errors %}
-        <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">Identifiants invalides.</div>
+        <div class="mb-4 border border-red-400/70 bg-red-950/40 px-3 py-2 text-sm text-red-100">Identifiants invalides.</div>
       {% endif %}
-      <label class="block text-sm font-semibold" for="{{ form.username.id_for_label }}">Nom utilisateur</label>
+      <label class="block" for="{{ form.username.id_for_label }}">Nom utilisateur</label>
       <div class="mt-1">{{ form.username }}</div>
-      <label class="mt-4 block text-sm font-semibold" for="{{ form.password.id_for_label }}">Mot de passe</label>
+      <label class="mt-5 block" for="{{ form.password.id_for_label }}">Mot de passe</label>
       <div class="mt-1">{{ form.password }}</div>
       <button class="btn-primary mt-6 w-full" type="submit">Se connecter</button>
     </form>

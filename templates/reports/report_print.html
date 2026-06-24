@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rapport {{ report.service_date }} - {{ report.extension.name }}</title>
+  <style>
+    body {
+      background:
+        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
+        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
+        #0A0A0A;
+      color: #F2F0E4;
+      font-family: Arial, sans-serif;
+      margin: 32px;
+    }
+    header { border-bottom: 2px double #D4AF37; margin-bottom: 24px; padding-bottom: 16px; }
+    h1 { color: #F2F0E4; font-family: Georgia, serif; font-size: 38px; letter-spacing: 0.18em; margin: 0 0 8px; text-transform: uppercase; }
+    h2 { color: #D4AF37; font-size: 18px; letter-spacing: 0.16em; margin: 24px 0 10px; text-transform: uppercase; }
+    table { background: #141414; border-collapse: collapse; box-shadow: 0 0 18px rgba(212, 175, 55, 0.12); margin-bottom: 18px; width: 100%; }
+    th, td { border: 1px solid rgba(212, 175, 55, 0.45); padding: 8px 10px; text-align: left; }
+    th { background: rgba(30, 61, 89, 0.45); color: #D4AF37; }
+    .actions { margin-bottom: 24px; }
+    .actions button { border: 1px solid #D4AF37; background: #D4AF37; color: #0A0A0A; cursor: pointer; font-weight: 700; letter-spacing: 0.16em; padding: 12px 16px; text-transform: uppercase; }
+    @media print {
+      body { background: white; color: #111827; margin: 18mm; }
+      header { border-bottom-color: #111827; }
+      h1, h2 { color: #111827; }
+      table { background: white; box-shadow: none; }
+      th, td { border-color: #d1d5db; }
+      th { background: #f3f4f6; color: #111827; }
+      .actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="actions">
+    <button type="button" onclick="window.print()">Imprimer</button>
+  </div>
+
+  <header>
+    <h1>{{ report.extension.name }}</h1>
+    <p>{{ report.get_service_type_display }} du {{ report.service_date }}</p>
+    {% if report.preacher %}<p>Predicateur: {{ report.preacher }}</p>{% endif %}
+    {% if report.theme %}<p>Theme: {{ report.theme }}</p>{% endif %}
+  </header>
+
+  <h2>Presence</h2>
+  <table>
+    <tbody>
+      <tr><th>Hommes</th><td>{{ report.men_count }}</td><th>Femmes</th><td>{{ report.women_count }}</td></tr>
+      <tr><th>Enfants</th><td>{{ report.children_count }}</td><th>Visiteurs</th><td>{{ report.visitors_count }}</td></tr>
+      <tr><th>Total</th><td colspan="3">{{ report.total_attendance }}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Finances</h2>
+  <table>
+    <tbody>
+      <tr><th>Offrandes ordinaires</th><td>{{ report.offering_regular }}</td><th>Offrande orateur</th><td>{{ report.offering_preacher }}</td></tr>
+      <tr><th>Dimes</th><td>{{ report.offering_tithe }}</td><th>Actions de grace</th><td>{{ report.offering_thanksgiving }}</td></tr>
+      <tr><th>Recettes supplementaires</th><td>{{ report.extra_income }}</td><th>Depenses</th><td>{{ report.expenses }}</td></tr>
+      <tr><th>Total offrandes</th><td>{{ report.total_offerings }}</td><th>Dime + social</th><td>{{ report.tithe_deduction|add:report.social_deduction }}</td></tr>
+      <tr><th>Solde net</th><td colspan="3">{{ report.net_balance }}</td></tr>
+    </tbody>
+  </table>
+
+  {% if report.notes %}
+    <h2>Notes</h2>
+    <p>{{ report.notes|linebreaksbr }}</p>
+  {% endif %}
+</body>
+</html>

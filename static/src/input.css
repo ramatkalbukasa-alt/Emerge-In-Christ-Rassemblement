@@ -7,23 +7,174 @@
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
+      repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
+      repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
+      #0A0A0A;
+  }
+
   input,
   select,
   textarea {
-    @apply rounded-md border-gray-300 text-sm focus:border-ecclesia-green focus:ring-ecclesia-green;
+    @apply min-h-12 w-full border-0 border-b-2 border-ecclesia-gold/70 bg-transparent px-3 py-2 font-sans text-sm text-ecclesia-cream placeholder:text-ecclesia-pewter transition-all duration-300 focus:border-[#F2E8C4] focus:outline-none focus:ring-0;
+    box-shadow: none;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    box-shadow: 0 8px 18px -14px rgba(212, 175, 55, 0.8);
+  }
+
+  label {
+    @apply font-sans text-xs font-bold uppercase tracking-[0.18em] text-ecclesia-gold;
   }
 }
 
 @layer components {
+  .skip-link {
+    @apply fixed left-4 top-4 z-50 -translate-y-24 border border-ecclesia-gold bg-ecclesia-black px-4 py-3 text-sm font-bold uppercase tracking-[0.18em] text-ecclesia-gold transition-transform duration-300 focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+  }
+
   .metric-card {
-    @apply rounded-lg border border-ecclesia-line bg-white p-4 shadow-sm;
+    @apply deco-card p-5;
   }
 
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-md bg-ecclesia-green px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-700/20;
+    @apply inline-flex min-h-12 cursor-pointer items-center justify-center border-2 border-ecclesia-gold bg-ecclesia-gold px-5 py-2 font-sans text-xs font-bold uppercase tracking-[0.22em] text-ecclesia-black transition-all duration-300 hover:bg-[#F2E8C4] hover:shadow-[0_0_24px_rgba(212,175,55,0.45)] focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
   }
 
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-md border border-ecclesia-line bg-white px-4 py-2 text-sm font-semibold text-ecclesia-ink transition-colors hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-900/10;
+    @apply inline-flex min-h-12 cursor-pointer items-center justify-center border border-ecclesia-gold/80 bg-transparent px-5 py-2 font-sans text-xs font-bold uppercase tracking-[0.22em] text-ecclesia-gold transition-all duration-300 hover:bg-ecclesia-blue hover:text-ecclesia-cream hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+  }
+
+  .deco-card {
+    @apply relative border border-ecclesia-gold/30 bg-ecclesia-charcoal text-ecclesia-cream transition-all duration-500 ease-out;
+    clip-path: polygon(
+      0 14px,
+      14px 14px,
+      14px 0,
+      calc(100% - 14px) 0,
+      calc(100% - 14px) 14px,
+      100% 14px,
+      100% calc(100% - 14px),
+      calc(100% - 14px) calc(100% - 14px),
+      calc(100% - 14px) 100%,
+      14px 100%,
+      14px calc(100% - 14px),
+      0 calc(100% - 14px)
+    );
+    box-shadow: inset 0 0 0 1px rgba(242, 240, 228, 0.04), 0 0 18px rgba(212, 175, 55, 0.08);
+  }
+
+  .deco-card::before,
+  .deco-card::after {
+    content: "";
+    @apply pointer-events-none absolute h-6 w-6 border-ecclesia-gold/70 transition-opacity duration-500;
+  }
+
+  .deco-card::before {
+    @apply left-2 top-2 border-l-2 border-t-2;
+  }
+
+  .deco-card::after {
+    @apply bottom-2 right-2 border-b-2 border-r-2;
+  }
+
+  .deco-card:hover {
+    @apply -translate-y-2 border-ecclesia-gold;
+    box-shadow: inset 0 0 0 1px rgba(242, 240, 228, 0.06), 0 0 22px rgba(212, 175, 55, 0.18);
+  }
+
+  .deco-panel {
+    @apply deco-card;
+  }
+
+  .deco-heading {
+    @apply font-display text-3xl font-normal uppercase leading-tight tracking-[0.22em] text-ecclesia-cream md:text-5xl xl:text-6xl;
+  }
+
+  .deco-kicker {
+    @apply font-sans text-xs font-bold uppercase tracking-[0.26em] text-ecclesia-gold;
+  }
+
+  .deco-divider {
+    @apply my-4 flex items-center gap-4;
+  }
+
+  .deco-divider::before,
+  .deco-divider::after {
+    content: "";
+    @apply h-px w-20 bg-ecclesia-gold/60;
+  }
+
+  .deco-diamond {
+    @apply flex h-11 w-11 rotate-45 items-center justify-center border border-ecclesia-gold bg-ecclesia-black text-ecclesia-gold shadow-[0_0_14px_rgba(212,175,55,0.22)];
+  }
+
+  .deco-diamond > span {
+    @apply -rotate-45 font-display text-sm uppercase tracking-widest;
+  }
+
+  .deco-table {
+    @apply min-w-full divide-y divide-ecclesia-gold/20 text-sm text-ecclesia-cream;
+  }
+
+  .deco-table thead {
+    @apply bg-ecclesia-blue/30 text-left text-xs font-bold uppercase tracking-[0.2em] text-ecclesia-gold;
+  }
+
+  .deco-table tbody {
+    @apply divide-y divide-ecclesia-gold/15;
+  }
+
+  .deco-table tr {
+    @apply transition-colors duration-300 hover:bg-ecclesia-gold/5;
+  }
+
+  .deco-action {
+    @apply inline-flex min-h-11 cursor-pointer items-center gap-2 border-b border-ecclesia-gold/60 px-1 py-2 font-sans text-xs font-bold uppercase tracking-[0.18em] text-ecclesia-gold transition-all duration-300 hover:border-ecclesia-gold hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+  }
+
+  .deco-action::after {
+    content: "->";
+    @apply text-ecclesia-gold transition-transform duration-300;
+  }
+
+  .deco-action:hover::after {
+    @apply translate-x-1;
+  }
+
+  .deco-mini-panel {
+    @apply border border-ecclesia-gold/25 bg-ecclesia-black/40 p-3 transition-all duration-300 hover:border-ecclesia-gold hover:shadow-[0_0_16px_rgba(212,175,55,0.16)];
+    clip-path: polygon(0 8px, 8px 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  }
+
+  .form-control {
+    @apply min-h-12 w-full border-0 border-b-2 border-ecclesia-gold/70 bg-transparent px-3 py-2 font-sans text-sm text-ecclesia-cream transition-all duration-300 focus:border-[#F2E8C4] focus:outline-none focus:ring-0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-primary,
+    .btn-secondary,
+    .deco-action,
+    .deco-card,
+    .deco-card::before,
+    .deco-card::after,
+    .deco-table tr,
+    .form-control {
+      transition-duration: 1ms;
+    }
+
+    .deco-card:hover,
+    .deco-action:hover::after {
+      transform: none;
+    }
   }
 }

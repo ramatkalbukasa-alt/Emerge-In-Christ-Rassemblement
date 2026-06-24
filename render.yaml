@@ -9,11 +9,15 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: ecclessia_manager.settings
       - key: PYTHON_VERSION
-        value: 3.13.5
+        value: 3.11.9
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
       - key: DATABASE_URL
         fromDatabase:
           name: ecclessia-manager-db
