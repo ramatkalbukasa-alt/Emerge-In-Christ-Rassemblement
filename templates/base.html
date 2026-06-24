@@ -58,6 +58,17 @@
       {% endif %}
 
       <div class="{% if user.is_authenticated %}p-4 lg:p-8{% endif %}">
+        {% if user.is_authenticated %}
+          <div
+            x-data="reportRealtime()"
+            x-init="connect()"
+            x-show="message"
+            x-cloak
+            class="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+          >
+            <span x-text="message"></span>
+          </div>
+        {% endif %}
         {% for message in messages %}
           <div class="mb-4 rounded-md border border-ecclesia-line bg-white px-4 py-3 text-sm">{{ message }}</div>
         {% endfor %}
@@ -65,5 +76,26 @@
       </div>
     </main>
   </div>
+  {% if user.is_authenticated %}
+    <script>
+      function reportRealtime() {
+        return {
+          socket: null,
+          message: "",
+          connect() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/reports/`);
+            this.socket.onmessage = (event) => {
+              const payload = JSON.parse(event.data);
+              if (payload.type === "report.created") {
+                this.message = `Nouveau rapport: ${payload.extension} (${payload.service_date})`;
+                window.setTimeout(() => { this.message = ""; }, 6000);
+              }
+            };
+          }
+        };
+      }
+    </script>
+  {% endif %}
 </body>
 </html>

@@ -6,6 +6,7 @@ from apps.accounts.models import UserProfile
 from .forms import ServiceReportForm
 from .permissions import reports_for_user, user_extension, user_is_admin
 from .models import ServiceReport
+from .realtime import publish_report_created
 
 
 @login_required
@@ -37,6 +38,7 @@ def report_create(request):
             report.extension = user_extension(request.user)
         report.submitted_by = request.user
         report.save()
+        publish_report_created(report)
         return redirect("reports:detail", pk=report.pk)
 
     return render(request, "reports/report_form.html", {"form": form})

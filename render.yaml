@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: "pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput"
-    startCommand: "python manage.py migrate && gunicorn ecclessia_manager.wsgi:application"
+    startCommand: "python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: ecclessia_manager.settings
@@ -18,6 +18,16 @@ services:
         fromDatabase:
           name: ecclessia-manager-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ecclessia-manager-redis
+          property: connectionString
+
+  - type: redis
+    name: ecclessia-manager-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
 
 databases:
   - name: ecclessia-manager-db
