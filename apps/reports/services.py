@@ -1,5 +1,6 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+from django.core.exceptions import ValidationError
 
 Money = Decimal
 
@@ -7,16 +8,27 @@ Money = Decimal
 def money(value):
     if value is None:
         value = 0
-    return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    try:
+        amount = Decimal(value)
+        if not amount.is_finite():
+            raise ValidationError("Le montant doit être un nombre fini.")
+        return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, TypeError, ValueError) as error:
+        raise ValidationError("Montant invalide.") from error
 
 
 def compute_ventilation(ordinaires, orateur, dimes, actions_grace, social_percentage):
-    social_rate = money(social_percentage) / Decimal("100")
+    percentage = money(social_percentage)
+    if not 0 <= percentage <= 90:
+        raise ValidationError("Le taux social doit être compris entre 0 et 90 %.")
+    social_rate = percentage / Decimal("100")
 
     def calc(amount, apply_dime=True, apply_social=True):
-        amount = money(max(Decimal("0"), money(amount)))
+        amount = money(amount)
+        if amount < 0:
+            raise ValidationError("Les offrandes ne peuvent pas être négatives.")
         dime = money(amount * Decimal("0.10")) if apply_dime else money(0)
-        social = money(amount * social_rate) if apply_social else money(0)
+        social = min(money(amount * social_rate), amount - dime) if apply_social else money(0)
         reste = money(amount - dime - social)
         return {"dime": dime, "social": social, "reste": reste}
 

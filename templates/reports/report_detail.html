@@ -6,6 +6,12 @@
     <p class="deco-kicker">V. Detail</p>
     <h1 class="deco-heading mt-2">{{ report.extension.name }}</h1>
     <p class="mt-1 text-sm text-ecclesia-muted">{{ report.get_service_type_display }} du {{ report.service_date }}</p>
+    <p class="mt-1 text-sm text-ecclesia-muted">Devise : {{ report.currency_label }}</p>
+    {% if report.calculation_version %}
+      <p class="mt-1 text-sm text-ecclesia-muted">Taux social applique : {{ report.social_percentage_applied|floatformat:2 }} %</p>
+    {% else %}
+      <p class="mt-1 text-sm text-ecclesia-muted">Rapport historique : taux inconnu, montants conserves et finances verrouillees.</p>
+    {% endif %}
   </div>
   <div class="flex flex-wrap gap-2">
     <a class="btn-secondary" href="{% url 'reports:print' report.pk %}" target="_blank" rel="noopener">Imprimer</a>
@@ -23,15 +29,15 @@
   </div>
   <div class="metric-card">
     <p class="text-sm font-semibold text-ecclesia-muted">Offrandes</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_offerings }}</p>
+    <p class="mt-3 text-3xl font-extrabold">{{ report.total_offerings|floatformat:2 }}</p>
   </div>
   <div class="metric-card">
     <p class="text-sm font-semibold text-ecclesia-muted">Dime + social</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.tithe_deduction|add:report.social_deduction }}</p>
+    <p class="mt-3 text-3xl font-extrabold">{{ report.total_deductions|floatformat:2 }}</p>
   </div>
   <div class="metric-card">
     <p class="text-sm font-semibold text-ecclesia-muted">Solde net</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.net_balance }}</p>
+    <p class="mt-3 text-3xl font-extrabold">{{ report.net_balance|floatformat:2 }}</p>
   </div>
 </section>
 
@@ -49,12 +55,12 @@
   <section class="deco-card p-6">
     <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Finances</h2>
     <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-ecclesia-muted">Ordinaires</dt><dd class="font-semibold">{{ report.offering_regular }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Orateur</dt><dd class="font-semibold">{{ report.offering_preacher }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Dimes</dt><dd class="font-semibold">{{ report.offering_tithe }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Actions de grace</dt><dd class="font-semibold">{{ report.offering_thanksgiving }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Depenses</dt><dd class="font-semibold">{{ report.expenses }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Recettes supplementaires</dt><dd class="font-semibold">{{ report.extra_income }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Ordinaires</dt><dd class="font-semibold">{{ report.offering_regular|floatformat:2 }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Orateur</dt><dd class="font-semibold">{{ report.offering_preacher|floatformat:2 }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Dimes</dt><dd class="font-semibold">{{ report.offering_tithe|floatformat:2 }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Actions de grace</dt><dd class="font-semibold">{{ report.offering_thanksgiving|floatformat:2 }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Depenses</dt><dd class="font-semibold">{{ report.expenses|floatformat:2 }}</dd></div>
+      <div><dt class="text-ecclesia-muted">Recettes supplementaires</dt><dd class="font-semibold">{{ report.extra_income|floatformat:2 }}</dd></div>
     </dl>
   </section>
 </div>

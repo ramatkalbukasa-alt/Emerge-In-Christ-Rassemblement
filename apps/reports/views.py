@@ -2,13 +2,19 @@ import csv
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from docx import Document
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .forms import ServiceReportForm
 from .permissions import reports_for_user, user_extension, user_is_admin
-from .models import ServiceReport
 from .realtime import publish_report_created
 
 
@@ -25,6 +31,9 @@ def _money(value):
 def _report_rows(report):
     return [
         ("Extension", report.extension.name),
+        ("Devise", report.currency_label),
+        ("Taux social applique (%)", report.social_percentage_applied
+         if report.social_percentage_applied is not None else "Historique inconnu"),
         ("Date", report.service_date),
         ("Type", report.get_service_type_display()),
         ("Predicateur", report.preacher or ""),
@@ -43,6 +52,7 @@ def _report_rows(report):
         ("Total offrandes", _money(report.total_offerings)),
         ("Ventilation dimes", _money(report.tithe_deduction)),
         ("Ventilation sociale", _money(report.social_deduction)),
+        ("Dime + social", _money(report.total_deductions)),
         ("Solde net", _money(report.net_balance)),
         ("Notes", report.notes or ""),
     ]
@@ -59,8 +69,6 @@ def _export_report_csv(report):
 
 
 def _export_report_docx(report):
-    from docx import Document
-
     document = Document()
     document.add_heading(f"Rapport - {report.extension.name}", level=1)
     document.add_paragraph(f"{report.get_service_type_display()} du {report.service_date}")
@@ -85,11 +93,6 @@ def _export_report_docx(report):
 
 
 def _export_report_pdf(report):
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle, Paragraph
-
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=A4, title=f"Rapport {report.extension.name}")
     styles = getSampleStyleSheet()
@@ -128,6 +131,7 @@ def _export_reports_csv(reports):
         [
             "Date",
             "Extension",
+            "Devise",
             "Type",
             "Presence",
             "Offrandes",
@@ -142,6 +146,7 @@ def _export_reports_csv(reports):
             [
                 report.service_date,
                 report.extension.name,
+                report.currency_label,
                 report.get_service_type_display(),
                 report.total_attendance,
                 _money(report.total_offerings),
@@ -201,7 +206,10 @@ def reports_export(request, file_format):
 def report_create(request):
     initial = {}
     if not user_is_admin(request.user):
-        initial["extension"] = user_extension(request.user)
+        extension = user_extension(request.user)
+        if extension is None or not extension.is_active:
+            raise PermissionDenied("Une extension active doit être affectée à votre compte.")
+        initial["extension"] = extension
 
     form = ServiceReportForm(request.POST or None, initial=initial)
     if not user_is_admin(request.user):
@@ -213,8 +221,13 @@ def report_create(request):
         if not user_is_admin(request.user):
             report.extension = user_extension(request.user)
         report.submitted_by = request.user
-        report.save()
-        publish_report_created(report)
-        return redirect("reports:detail", pk=report.pk)
+        try:
+            with transaction.atomic():
+                report.save()
+                transaction.on_commit(lambda: publish_report_created(report), robust=True)
+        except ValidationError as error:
+            form.add_error(None, error.messages)
+        else:
+            return redirect("reports:detail", pk=report.pk)
 
     return render(request, "reports/report_form.html", {"form": form})
