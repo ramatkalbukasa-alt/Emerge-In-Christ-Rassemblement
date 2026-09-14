@@ -1,74 +1,94 @@
 {% extends "base.html" %}
 {% block title %}Rapport {{ report.service_date }} - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Rapport du {{ report.service_date }}{% endblock %}
 {% block content %}
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<a class="action-link mb-6" href="{% url 'reports:list' %}">{% include "partials/icon.html" with name="arrow-left" stroke="3" %}Retour aux rapports</a>
+
+<div class="grid gap-6 border-b-4 border-bauhaus-ink pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
   <div>
-    <p class="deco-kicker">V. Detail</p>
-    <h1 class="deco-heading mt-2">{{ report.extension.name }}</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">{{ report.get_service_type_display }} du {{ report.service_date }}</p>
-    <p class="mt-1 text-sm text-ecclesia-muted">Devise : {{ report.currency_label }}</p>
-    {% if report.calculation_version %}
-      <p class="mt-1 text-sm text-ecclesia-muted">Taux social applique : {{ report.social_percentage_applied|floatformat:2 }} %</p>
-    {% else %}
-      <p class="mt-1 text-sm text-ecclesia-muted">Rapport historique : taux inconnu, montants conserves et finances verrouillees.</p>
+    <p class="kicker">Détail</p>
+    <h1 class="display-heading mt-3">{{ report.extension.name }}</h1>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <span class="badge bg-bauhaus-yellow">{{ report.get_service_type_display }}</span>
+      <span class="badge bg-white num">{{ report.service_date }}</span>
+      <span class="badge bg-bauhaus-blue text-white">Devise : {{ report.currency_label }}</span>
+      {% if report.calculation_version %}
+        <span class="badge bg-white num">Taux social appliqué : {{ report.social_percentage_applied|floatformat:2 }} %</span>
+      {% endif %}
+    </div>
+    {% if not report.calculation_version %}
+      <div class="alert-info mt-4" role="status">
+        {% include "partials/icon.html" with name="lock" class="h-5 w-5 shrink-0" stroke="2.5" %}
+        <span>Rapport historique : taux inconnu, montants conservés et finances verrouillées.</span>
+      </div>
     {% endif %}
   </div>
-  <div class="flex flex-wrap gap-2">
-    <a class="btn-secondary" href="{% url 'reports:print' report.pk %}" target="_blank" rel="noopener">Imprimer</a>
+  <div class="flex flex-wrap gap-3">
+    <a class="btn-outline" href="{% url 'reports:print' report.pk %}" target="_blank" rel="noopener">
+      {% include "partials/icon.html" with name="printer" class="h-4 w-4" stroke="2.5" %}Imprimer
+    </a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'pdf' %}">PDF</a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'docx' %}">DOCX</a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'csv' %}">CSV</a>
-    <a class="btn-secondary" href="{% url 'reports:list' %}">Retour</a>
   </div>
 </div>
 
-<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Presence</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_attendance }}</p>
+<section class="mt-8 grid border-2 border-bauhaus-ink bg-bauhaus-yellow shadow-hard-lg sm:grid-cols-2 lg:border-4 xl:grid-cols-4" aria-label="Chiffres clés">
+  <div class="border-b-2 border-bauhaus-ink p-6 sm:border-r-2 lg:border-b-4 lg:border-r-4 xl:border-b-0">
+    <p class="metric-label text-bauhaus-ink">Présence</p>
+    <p class="metric-value num">{{ report.total_attendance }}</p>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Offrandes</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_offerings|floatformat:2 }}</p>
+  <div class="border-b-2 border-bauhaus-ink p-6 lg:border-b-4 xl:border-b-0 xl:border-r-4">
+    <p class="metric-label text-bauhaus-ink">Offrandes</p>
+    <p class="metric-value num">{{ report.total_offerings|floatformat:2 }} <span class="text-base font-bold tracking-normal">{{ report.currency_label }}</span></p>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Dime + social</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_deductions|floatformat:2 }}</p>
+  <div class="border-b-2 border-bauhaus-ink p-6 sm:border-b-0 sm:border-r-2 lg:border-r-4">
+    <p class="metric-label text-bauhaus-ink">Dîme + social</p>
+    <p class="metric-value num">{{ report.total_deductions|floatformat:2 }} <span class="text-base font-bold tracking-normal">{{ report.currency_label }}</span></p>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Solde net</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.net_balance|floatformat:2 }}</p>
+  <div class="bg-bauhaus-ink p-6 text-white">
+    <p class="metric-label text-bauhaus-yellow">Solde net</p>
+    <p class="metric-value num">{{ report.net_balance|floatformat:2 }} <span class="text-base font-bold tracking-normal">{{ report.currency_label }}</span></p>
   </div>
 </section>
 
-<div class="mt-6 grid gap-6 xl:grid-cols-2">
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Effectif</h2>
-    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-ecclesia-muted">Hommes</dt><dd class="font-semibold">{{ report.men_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Femmes</dt><dd class="font-semibold">{{ report.women_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Enfants</dt><dd class="font-semibold">{{ report.children_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Visiteurs</dt><dd class="font-semibold">{{ report.visitors_count }}</dd></div>
+<div class="mt-8 grid gap-8 xl:grid-cols-2">
+  <section class="card p-6 lg:p-8" aria-labelledby="detail-effectif">
+    <span class="card-corner shape-circle bg-bauhaus-red" aria-hidden="true"></span>
+    <h2 id="detail-effectif" class="section-heading">Effectif</h2>
+    <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-5">
+      <div class="border-l-4 border-bauhaus-red pl-4"><dt class="metric-label">Hommes</dt><dd class="mt-1 text-2xl font-black num">{{ report.men_count }}</dd></div>
+      <div class="border-l-4 border-bauhaus-blue pl-4"><dt class="metric-label">Femmes</dt><dd class="mt-1 text-2xl font-black num">{{ report.women_count }}</dd></div>
+      <div class="border-l-4 border-bauhaus-yellow pl-4"><dt class="metric-label">Enfants</dt><dd class="mt-1 text-2xl font-black num">{{ report.children_count }}</dd></div>
+      <div class="border-l-4 border-bauhaus-ink pl-4"><dt class="metric-label">Visiteurs</dt><dd class="mt-1 text-2xl font-black num">{{ report.visitors_count }}</dd></div>
     </dl>
+    {% if report.preacher or report.theme %}
+      <dl class="mt-6 grid gap-4 border-t-2 border-bauhaus-ink pt-6 text-sm sm:grid-cols-2">
+        {% if report.preacher %}<div><dt class="metric-label">Orateur</dt><dd class="mt-1 font-bold">{{ report.preacher }}</dd></div>{% endif %}
+        {% if report.theme %}<div><dt class="metric-label">Thème</dt><dd class="mt-1 font-bold">{{ report.theme }}</dd></div>{% endif %}
+      </dl>
+    {% endif %}
   </section>
 
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Finances</h2>
-    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-ecclesia-muted">Ordinaires</dt><dd class="font-semibold">{{ report.offering_regular|floatformat:2 }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Orateur</dt><dd class="font-semibold">{{ report.offering_preacher|floatformat:2 }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Dimes</dt><dd class="font-semibold">{{ report.offering_tithe|floatformat:2 }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Actions de grace</dt><dd class="font-semibold">{{ report.offering_thanksgiving|floatformat:2 }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Depenses</dt><dd class="font-semibold">{{ report.expenses|floatformat:2 }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Recettes supplementaires</dt><dd class="font-semibold">{{ report.extra_income|floatformat:2 }}</dd></div>
+  <section class="card p-6 lg:p-8" aria-labelledby="detail-finances">
+    <span class="card-corner shape-square bg-bauhaus-blue" aria-hidden="true"></span>
+    <h2 id="detail-finances" class="section-heading">Finances</h2>
+    <dl class="mt-6 divide-y-2 divide-bauhaus-ink border-y-2 border-bauhaus-ink text-sm">
+      <div class="flex items-center justify-between gap-4 py-3"><dt class="font-bold uppercase tracking-wider">Ordinaires</dt><dd class="font-black num">{{ report.offering_regular|floatformat:2 }} {{ report.currency_label }}</dd></div>
+      <div class="flex items-center justify-between gap-4 py-3"><dt class="font-bold uppercase tracking-wider">Orateur</dt><dd class="font-black num">{{ report.offering_preacher|floatformat:2 }} {{ report.currency_label }}</dd></div>
+      <div class="flex items-center justify-between gap-4 py-3"><dt class="font-bold uppercase tracking-wider">Dîmes</dt><dd class="font-black num">{{ report.offering_tithe|floatformat:2 }} {{ report.currency_label }}</dd></div>
+      <div class="flex items-center justify-between gap-4 py-3"><dt class="font-bold uppercase tracking-wider">Actions de grâce</dt><dd class="font-black num">{{ report.offering_thanksgiving|floatformat:2 }} {{ report.currency_label }}</dd></div>
+      <div class="flex items-center justify-between gap-4 py-3"><dt class="font-bold uppercase tracking-wider">Recettes supplémentaires</dt><dd class="font-black num">{{ report.extra_income|floatformat:2 }} {{ report.currency_label }}</dd></div>
+      <div class="flex items-center justify-between gap-4 py-3 text-bauhaus-red"><dt class="font-bold uppercase tracking-wider">Dépenses</dt><dd class="font-black num">− {{ report.expenses|floatformat:2 }} {{ report.currency_label }}</dd></div>
     </dl>
   </section>
 </div>
 
 {% if report.notes %}
-  <section class="deco-card mt-6 p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Notes</h2>
-    <p class="mt-3 whitespace-pre-line text-sm text-ecclesia-muted">{{ report.notes }}</p>
+  <section class="card mt-8 p-6 lg:p-8" aria-labelledby="detail-notes">
+    <span class="card-corner shape-triangle bg-bauhaus-yellow" aria-hidden="true"></span>
+    <h2 id="detail-notes" class="section-heading">Notes</h2>
+    <p class="mt-4 whitespace-pre-line text-base leading-relaxed">{{ report.notes }}</p>
   </section>
 {% endif %}
 {% endblock %}

@@ -1,46 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Rapports - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Rapports{% endblock %}
 {% block content %}
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <p class="deco-kicker">III. Registre</p>
-    <h1 class="deco-heading mt-2">Rapports</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">Historique des cultes, presences, offrandes et soldes.</p>
-  </div>
-  <div class="flex flex-wrap gap-2">
-    <a class="btn-secondary" href="{% url 'reports:export' 'html' %}" target="_blank" rel="noopener">Imprimer</a>
-    <a class="btn-secondary" href="{% url 'reports:export' 'csv' %}">CSV</a>
-    <a class="btn-primary" href="{% url 'reports:create' %}">Nouveau rapport</a>
+<div class="border-b-4 border-bauhaus-ink pb-8">
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="kicker">Registre</p>
+      <h1 class="display-heading mt-3">Rapports</h1>
+      <p class="lead mt-3 max-w-xl">Historique des cultes, présences, offrandes et soldes.</p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <a class="btn-outline" href="{% url 'reports:export' 'html' %}" target="_blank" rel="noopener">
+        {% include "partials/icon.html" with name="printer" class="h-4 w-4" stroke="2.5" %}Imprimer
+      </a>
+      <a class="btn-secondary" href="{% url 'reports:export' 'csv' %}">
+        {% include "partials/icon.html" with name="download" class="h-4 w-4" stroke="2.5" %}CSV
+      </a>
+      <a class="btn-primary" href="{% url 'reports:create' %}">
+        {% include "partials/icon.html" with name="plus" class="h-4 w-4" stroke="3" %}Nouveau rapport
+      </a>
+    </div>
   </div>
 </div>
 
-<section class="deco-panel overflow-hidden">
+<section class="panel mt-8" aria-label="Liste des rapports">
+  <div class="panel-header bg-bauhaus-yellow">
+    <h2 class="panel-title">{{ reports|length }} rapport{{ reports|length|pluralize }}</h2>
+    <span class="hidden h-4 w-4 shape-diamond bg-bauhaus-ink sm:block" aria-hidden="true"></span>
+  </div>
   <div class="overflow-x-auto">
-    <table class="deco-table">
+    <table class="data-table">
       <thead>
         <tr>
-          <th class="px-4 py-3">Date</th>
-          <th class="px-4 py-3">Extension</th>
-          <th class="px-4 py-3">Type</th>
-          <th class="px-4 py-3">Presence</th>
-          <th class="px-4 py-3">Offrandes</th>
-          <th class="px-4 py-3">Solde</th>
-          <th class="px-4 py-3"></th>
+          <th scope="col">Date</th>
+          <th scope="col">Extension</th>
+          <th scope="col">Type</th>
+          <th scope="col" class="text-right">Présence</th>
+          <th scope="col" class="text-right">Offrandes</th>
+          <th scope="col" class="text-right">Solde</th>
+          <th scope="col"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for report in reports %}
           <tr>
-            <td class="px-4 py-3 font-medium">{{ report.service_date }}</td>
-            <td class="px-4 py-3">{{ report.extension.name }}</td>
-            <td class="px-4 py-3">{{ report.get_service_type_display }}</td>
-            <td class="px-4 py-3">{{ report.total_attendance }}</td>
-            <td class="px-4 py-3">{{ report.total_offerings|floatformat:2 }} {{ report.currency_label }}</td>
-            <td class="px-4 py-3 font-semibold">{{ report.net_balance|floatformat:2 }} {{ report.currency_label }}</td>
-            <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'reports:detail' report.pk %}">Ouvrir</a></td>
+            <td class="font-bold num">{{ report.service_date }}</td>
+            <td>{{ report.extension.name }}</td>
+            <td><span class="badge bg-bauhaus-muted">{{ report.get_service_type_display }}</span></td>
+            <td class="text-right num">{{ report.total_attendance }}</td>
+            <td class="text-right num">{{ report.total_offerings|floatformat:2 }} {{ report.currency_label }}</td>
+            <td class="text-right font-black num">{{ report.net_balance|floatformat:2 }} {{ report.currency_label }}</td>
+            <td class="text-right"><a class="action-link" href="{% url 'reports:detail' report.pk %}">Ouvrir{% include "partials/icon.html" with name="arrow-right" stroke="3" %}</a></td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="7">Aucun rapport enregistre.</td></tr>
+          <tr><td class="px-4 py-10 text-center text-bauhaus-slate" colspan="7">Aucun rapport enregistré.</td></tr>
         {% endfor %}
       </tbody>
     </table>

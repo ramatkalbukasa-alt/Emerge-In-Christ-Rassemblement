@@ -1,72 +1,85 @@
 {% extends "base.html" %}
 {% block title %}Nouveau rapport - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Nouveau rapport{% endblock %}
 {% block content %}
-<div class="mb-6">
-  <p class="deco-kicker">IV. Saisie</p>
-  <h1 class="deco-heading mt-2">Nouveau rapport</h1>
-  <p class="mt-1 text-sm text-ecclesia-muted">Saisie du culte, des presences, des offrandes et des depenses.</p>
+<div class="border-b-4 border-bauhaus-ink pb-8">
+  <p class="kicker">Saisie</p>
+  <h1 class="display-heading mt-3">Nouveau rapport</h1>
+  <p class="lead mt-3 max-w-xl">Culte, présences, offrandes et dépenses. Les champs marqués <span class="font-black text-bauhaus-red">*</span> sont obligatoires.</p>
 </div>
 
-<form method="post" class="space-y-5" x-data>
+<form method="post" class="mt-8 space-y-8" x-data novalidate>
   {% csrf_token %}
   {% if form.non_field_errors %}
-    <div class="border border-red-400/70 bg-red-950/40 px-4 py-3 text-sm text-red-100">{{ form.non_field_errors }}</div>
+    <div class="alert-error" role="alert">
+      {% include "partials/icon.html" with name="alert" class="h-5 w-5 shrink-0" stroke="2.5" %}
+      <div>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    </div>
   {% endif %}
 
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Culte</h2>
-    <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+  <section class="card p-6 lg:p-8" aria-labelledby="section-culte">
+    <span class="card-corner shape-circle bg-bauhaus-red" aria-hidden="true"></span>
+    <div class="flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-bauhaus-ink bg-bauhaus-red text-lg font-black text-white shadow-hard-sm" aria-hidden="true">1</span>
+      <h2 id="section-culte" class="section-heading">Culte</h2>
+    </div>
+    <div class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
       {% for field in form %}
-        {% if field.name == "extension" or field.name == "service_type" or field.name == "service_date" or field.name == "preacher" or field.name == "theme" %}
-          <div {% if field.name == "theme" %}class="xl:col-span-2"{% endif %}>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
-          </div>
+        {% if field.name == "extension" or field.name == "service_type" or field.name == "service_date" or field.name == "preacher" %}
+          {% include "partials/field.html" with field=field %}
+        {% elif field.name == "theme" %}
+          {% include "partials/field.html" with field=field wrapper_class="xl:col-span-2" %}
         {% endif %}
       {% endfor %}
     </div>
   </section>
 
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Effectif</h2>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <section class="card p-6 lg:p-8" aria-labelledby="section-effectif">
+    <span class="card-corner shape-square bg-bauhaus-blue" aria-hidden="true"></span>
+    <div class="flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-bauhaus-ink bg-bauhaus-blue text-lg font-black text-white shadow-hard-sm" aria-hidden="true">2</span>
+      <h2 id="section-effectif" class="section-heading">Effectif</h2>
+    </div>
+    <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {% for field in form %}
         {% if field.name == "men_count" or field.name == "women_count" or field.name == "children_count" or field.name == "visitors_count" %}
-          <div>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
-          </div>
+          {% include "partials/field.html" with field=field %}
         {% endif %}
       {% endfor %}
     </div>
   </section>
 
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Finances</h2>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <section class="card p-6 lg:p-8" aria-labelledby="section-finances">
+    <span class="card-corner shape-triangle bg-bauhaus-yellow" aria-hidden="true"></span>
+    <div class="flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-bauhaus-ink bg-bauhaus-yellow text-lg font-black shadow-hard-sm" aria-hidden="true">3</span>
+      <h2 id="section-finances" class="section-heading">Finances</h2>
+    </div>
+    <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {% for field in form %}
         {% if field.name == "offering_regular" or field.name == "offering_preacher" or field.name == "offering_tithe" or field.name == "offering_thanksgiving" or field.name == "extra_income" or field.name == "expenses" %}
-          <div>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
-          </div>
+          {% include "partials/field.html" with field=field %}
         {% endif %}
       {% endfor %}
     </div>
   </section>
 
-  <section class="deco-card p-6">
-    <label class="mb-1 block" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
-    {{ form.notes }}
-    {% for error in form.notes.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+  <section class="card p-6 lg:p-8" aria-labelledby="section-notes">
+    <span class="card-corner shape-diamond bg-bauhaus-ink" aria-hidden="true"></span>
+    <div class="flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-bauhaus-ink bg-white text-lg font-black shadow-hard-sm" aria-hidden="true">4</span>
+      <h2 id="section-notes" class="section-heading">Notes</h2>
+    </div>
+    <div class="mt-6">
+      {% include "partials/field.html" with field=form.notes %}
+    </div>
   </section>
 
-  <div class="flex gap-3">
-    <button class="btn-primary" type="submit">Enregistrer le rapport</button>
-    <a class="btn-secondary" href="{% url 'reports:list' %}">Annuler</a>
+  <div class="flex flex-col gap-3 border-t-4 border-bauhaus-ink pt-8 sm:flex-row sm:items-center">
+    <button class="btn-primary" type="submit">
+      {% include "partials/icon.html" with name="check" class="h-4 w-4" stroke="3" %}Enregistrer le rapport
+    </button>
+    <a class="btn-ghost" href="{% url 'reports:list' %}">Annuler</a>
   </div>
 </form>
 {% endblock %}

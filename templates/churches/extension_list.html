@@ -1,45 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Extensions - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Extensions{% endblock %}
 {% block content %}
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <p class="deco-kicker">II. Administration</p>
-    <h1 class="deco-heading mt-2">Extensions</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">Sites locaux, responsables et devise de gestion.</p>
+<div class="border-b-4 border-bauhaus-ink pb-8">
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="kicker">Administration</p>
+      <h1 class="display-heading mt-3">Extensions</h1>
+      <p class="lead mt-3 max-w-xl">Sites locaux, responsables et devise de gestion.</p>
+    </div>
+    <a class="btn-primary shrink-0" href="{% url 'churches:create' %}">
+      {% include "partials/icon.html" with name="plus" class="h-4 w-4" stroke="3" %}Ajouter une extension
+    </a>
   </div>
-  <a class="btn-primary" href="{% url 'churches:create' %}">Ajouter</a>
 </div>
 
-<section class="deco-panel overflow-hidden">
+<section class="panel mt-8" aria-label="Liste des extensions">
+  <div class="panel-header bg-bauhaus-blue text-white">
+    <h2 class="panel-title">{{ extensions|length }} extension{{ extensions|length|pluralize }}</h2>
+    <span class="hidden h-4 w-4 shape-circle bg-bauhaus-yellow sm:block" aria-hidden="true"></span>
+  </div>
   <div class="overflow-x-auto">
-    <table class="deco-table">
+    <table class="data-table">
       <thead>
         <tr>
-          <th class="px-4 py-3">Extension</th>
-          <th class="px-4 py-3">Ville</th>
-          <th class="px-4 py-3">Pasteur</th>
-          <th class="px-4 py-3">Devise</th>
-          <th class="px-4 py-3">Statut</th>
-          <th class="px-4 py-3"></th>
+          <th scope="col">Extension</th>
+          <th scope="col">Ville</th>
+          <th scope="col">Pasteur</th>
+          <th scope="col">Devise</th>
+          <th scope="col">Statut</th>
+          <th scope="col"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for extension in extensions %}
           <tr>
-            <td class="px-4 py-3">
+            <td>
               <div class="flex items-center gap-3">
-                <span class="h-3 w-3 rotate-45 border border-ecclesia-gold" style="background: {{ extension.color }}"></span>
-                <span class="font-semibold">{{ extension.name }}</span>
+                <span class="h-4 w-4 shrink-0 {% cycle 'shape-circle' 'shape-square' 'shape-diamond' %} border-2 border-bauhaus-ink" style="background: {{ extension.color }}" aria-hidden="true"></span>
+                <span class="font-bold uppercase tracking-tight">{{ extension.name }}</span>
               </div>
             </td>
-            <td class="px-4 py-3">{{ extension.city }}</td>
-            <td class="px-4 py-3">{{ extension.pastor_name }}</td>
-            <td class="px-4 py-3">{{ extension.currency }}</td>
-            <td class="px-4 py-3">{% if extension.is_active %}Active{% else %}Suspendue{% endif %}</td>
-            <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'churches:update' extension.slug %}">Modifier</a></td>
+            <td>{{ extension.city|default:"—" }}</td>
+            <td>{{ extension.pastor_name|default:"—" }}</td>
+            <td><span class="badge bg-bauhaus-muted">{{ extension.currency }}</span></td>
+            <td>
+              {% if extension.is_active %}
+                <span class="badge bg-bauhaus-yellow">Active</span>
+              {% else %}
+                <span class="badge bg-bauhaus-red text-white">Suspendue</span>
+              {% endif %}
+            </td>
+            <td class="text-right"><a class="action-link" href="{% url 'churches:update' extension.slug %}">Modifier{% include "partials/icon.html" with name="arrow-right" stroke="3" %}</a></td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="6">Aucune extension creee.</td></tr>
+          <tr><td class="px-4 py-10 text-center text-bauhaus-slate" colspan="6">Aucune extension créée.</td></tr>
         {% endfor %}
       </tbody>
     </table>
