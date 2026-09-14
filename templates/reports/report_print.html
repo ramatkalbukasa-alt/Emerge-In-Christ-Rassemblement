@@ -42,6 +42,12 @@
   <header>
     <h1>{{ report.extension.name }}</h1>
     <p>{{ report.get_service_type_display }} du {{ report.service_date }}</p>
+    <p>Devise : {{ report.currency_label }}</p>
+    {% if report.calculation_version %}
+      <p>Taux social applique : {{ report.social_percentage_applied|floatformat:2 }} %</p>
+    {% else %}
+      <p>Rapport historique : taux inconnu, montants conserves.</p>
+    {% endif %}
     {% if report.preacher %}<p>Predicateur: {{ report.preacher }}</p>{% endif %}
     {% if report.theme %}<p>Theme: {{ report.theme }}</p>{% endif %}
   </header>
@@ -58,11 +64,11 @@
   <h2>Finances</h2>
   <table>
     <tbody>
-      <tr><th>Offrandes ordinaires</th><td>{{ report.offering_regular }}</td><th>Offrande orateur</th><td>{{ report.offering_preacher }}</td></tr>
-      <tr><th>Dimes</th><td>{{ report.offering_tithe }}</td><th>Actions de grace</th><td>{{ report.offering_thanksgiving }}</td></tr>
-      <tr><th>Recettes supplementaires</th><td>{{ report.extra_income }}</td><th>Depenses</th><td>{{ report.expenses }}</td></tr>
-      <tr><th>Total offrandes</th><td>{{ report.total_offerings }}</td><th>Dime + social</th><td>{{ report.tithe_deduction|add:report.social_deduction }}</td></tr>
-      <tr><th>Solde net</th><td colspan="3">{{ report.net_balance }}</td></tr>
+      <tr><th>Offrandes ordinaires</th><td>{{ report.offering_regular|floatformat:2 }}</td><th>Offrande orateur</th><td>{{ report.offering_preacher|floatformat:2 }}</td></tr>
+      <tr><th>Dimes</th><td>{{ report.offering_tithe|floatformat:2 }}</td><th>Actions de grace</th><td>{{ report.offering_thanksgiving|floatformat:2 }}</td></tr>
+      <tr><th>Recettes supplementaires</th><td>{{ report.extra_income|floatformat:2 }}</td><th>Depenses</th><td>{{ report.expenses|floatformat:2 }}</td></tr>
+      <tr><th>Total offrandes</th><td>{{ report.total_offerings|floatformat:2 }}</td><th>Dime + social</th><td>{{ report.total_deductions|floatformat:2 }}</td></tr>
+      <tr><th>Solde net</th><td colspan="3">{{ report.net_balance|floatformat:2 }}</td></tr>
     </tbody>
   </table>
 

@@ -48,6 +48,7 @@
       <tr>
         <th>Date</th>
         <th>Extension</th>
+        <th>Devise</th>
         <th>Type</th>
         <th>Presence</th>
         <th>Offrandes</th>
@@ -61,15 +62,16 @@
         <tr>
           <td>{{ report.service_date }}</td>
           <td>{{ report.extension.name }}</td>
+          <td>{{ report.currency_label }}</td>
           <td>{{ report.get_service_type_display }}</td>
           <td>{{ report.total_attendance }}</td>
-          <td>{{ report.total_offerings }}</td>
-          <td>{{ report.tithe_deduction }}</td>
-          <td>{{ report.social_deduction }}</td>
-          <td>{{ report.net_balance }}</td>
+          <td>{{ report.total_offerings|floatformat:2 }}</td>
+          <td>{{ report.tithe_deduction|floatformat:2 }}</td>
+          <td>{{ report.social_deduction|floatformat:2 }}</td>
+          <td>{{ report.net_balance|floatformat:2 }}</td>
         </tr>
       {% empty %}
-        <tr><td colspan="8">Aucun rapport enregistre.</td></tr>
+        <tr><td colspan="9">Aucun rapport enregistre.</td></tr>
       {% endfor %}
     </tbody>
   </table>

@@ -35,8 +35,8 @@
             <td class="px-4 py-3">{{ report.extension.name }}</td>
             <td class="px-4 py-3">{{ report.get_service_type_display }}</td>
             <td class="px-4 py-3">{{ report.total_attendance }}</td>
-            <td class="px-4 py-3">{{ report.total_offerings }}</td>
-            <td class="px-4 py-3 font-semibold">{{ report.net_balance }}</td>
+            <td class="px-4 py-3">{{ report.total_offerings|floatformat:2 }} {{ report.currency_label }}</td>
+            <td class="px-4 py-3 font-semibold">{{ report.net_balance|floatformat:2 }} {{ report.currency_label }}</td>
             <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'reports:detail' report.pk %}">Ouvrir</a></td>
           </tr>
         {% empty %}

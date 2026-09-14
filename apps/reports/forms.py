@@ -1,9 +1,18 @@
 from django import forms
 
+from apps.churches.models import ChurchExtension
+
 from .models import NewConvert, ServiceReport
 
 
+class ExtensionChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, extension):
+        return f"{extension.name} ({extension.slug}, {extension.currency})"
+
+
 class ServiceReportForm(forms.ModelForm):
+    extension = ExtensionChoiceField(queryset=ChurchExtension.objects.filter(is_active=True))
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():

@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -29,9 +30,21 @@ class ChurchExtension(models.Model):
 
 
 class AppSetting(models.Model):
-    social_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5)
+    social_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5,
+        validators=[MinValueValidator(0), MaxValueValidator(90)],
+        help_text="De 0 à 90 %, en complément de la dîme de 10 %.",
+    )
     church_name = models.CharField(max_length=160, default="Emerge in Christ")
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(social_percentage__gte=0, social_percentage__lte=90),
+                name="social_percentage_valid",
+            ),
+        ]
 
     def __str__(self):
         return "Parametres generaux"

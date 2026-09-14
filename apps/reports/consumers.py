@@ -1,20 +1,31 @@
 import json
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
+
+from .permissions import report_event_group
 
 
-class ReportEventsConsumer(AsyncWebsocketConsumer):
-    group_name = "reports"
+class ReportEventsConsumer(WebsocketConsumer):
+    group_name = None
 
-    async def connect(self):
-        if not self.scope["user"].is_authenticated:
-            await self.close()
+    def connect(self):
+        self.group_name = report_event_group(self.scope["user"])
+        if self.group_name is None:
+            self.close()
             return
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
+        async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
+        self.accept()
 
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+    def disconnect(self, close_code):
+        if self.group_name:
+            async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
 
-    async def report_created(self, event):
-        await self.send(text_data=json.dumps(event["payload"]))
+    def report_created(self, event):
+        current_group = report_event_group(self.scope["user"])
+        if current_group != self.group_name:
+            self.close()
+            return
+        if current_group not in ("reports.admin", f"reports.extension.{event['extension_id']}"):
+            return
+        self.send(text_data=json.dumps(event["payload"]))
