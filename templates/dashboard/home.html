@@ -1,99 +1,118 @@
 {% extends "base.html" %}
 {% block title %}Tableau de bord - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Tableau de bord{% endblock %}
 {% block content %}
-<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <p class="deco-kicker">I. Vue generale</p>
-    <h1 class="deco-heading mt-2">Tableau de bord</h1>
-    <p class="mt-2 text-sm text-ecclesia-muted">Vue d'ensemble des extensions, cultes, finances et rapports.</p>
+<section class="relative overflow-hidden block-blue p-6 shadow-hard-lg sm:p-8 lg:p-12" aria-labelledby="dashboard-title">
+  <div class="absolute inset-0 dot-grid-light opacity-15" aria-hidden="true"></div>
+  <div class="absolute -right-12 -top-12 hidden h-56 w-56 shape-circle border-4 border-bauhaus-ink bg-bauhaus-yellow sm:block" aria-hidden="true"></div>
+  <div class="absolute bottom-6 right-28 hidden h-24 w-24 shape-diamond border-4 border-bauhaus-ink bg-bauhaus-red lg:block" aria-hidden="true"></div>
+  <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div class="max-w-2xl">
+      <p class="text-xs font-bold uppercase tracking-widest text-bauhaus-yellow">Vue générale</p>
+      <h1 id="dashboard-title" class="display-heading mt-3 text-white">Tableau<br>de bord</h1>
+      <p class="mt-4 max-w-md text-base font-medium leading-relaxed text-white/90 lg:text-lg">Extensions, cultes, finances et rapports — l'essentiel en une composition.</p>
+    </div>
+    <a class="btn-yellow shrink-0" href="{% url 'reports:create' %}">
+      {% include "partials/icon.html" with name="plus" class="h-4 w-4" stroke="3" %}
+      Nouveau rapport
+    </a>
   </div>
-  <a class="btn-primary" href="{% url 'reports:create' %}">Nouveau rapport</a>
-</div>
+</section>
 
-<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+<section class="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs">
   <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Extensions</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ extension_count }}</p>
+    <span class="card-corner shape-circle bg-bauhaus-red" aria-hidden="true"></span>
+    <p class="metric-label">Extensions</p>
+    <p class="metric-value num">{{ extension_count }}</p>
   </div>
   <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Rapports</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ totals.reports_count|default:0 }}</p>
+    <span class="card-corner shape-square bg-bauhaus-blue" aria-hidden="true"></span>
+    <p class="metric-label">Rapports</p>
+    <p class="metric-value num">{{ totals.reports_count|default:0 }}</p>
   </div>
   <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Presence totale</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ totals.attendance|default:0 }}</p>
+    <span class="card-corner shape-triangle bg-bauhaus-yellow" aria-hidden="true"></span>
+    <p class="metric-label">Présence totale</p>
+    <p class="metric-value num">{{ totals.attendance|default:0 }}</p>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Solde net par devise</p>
+  <div class="metric-card bg-bauhaus-yellow">
+    <span class="card-corner shape-diamond bg-bauhaus-ink" aria-hidden="true"></span>
+    <p class="metric-label text-bauhaus-ink">Solde net par devise</p>
     {% for row in financial_totals %}
-      <p class="mt-3 text-3xl font-extrabold">{{ row.balance|floatformat:2 }} {{ row.currency }}</p>
+      <p class="metric-value num {% if not forloop.first %}mt-2 text-2xl sm:text-2xl{% endif %}">{{ row.balance|floatformat:2 }} <span class="text-base font-bold tracking-normal">{{ row.currency }}</span></p>
     {% empty %}
-      <p class="mt-3 text-sm">Aucun montant dans une devise connue.</p>
+      <p class="mt-3 text-sm font-medium">Aucun montant dans une devise connue.</p>
     {% endfor %}
   </div>
 </section>
 {% if unknown_currency_count %}
-  <p class="mt-4 text-sm text-ecclesia-muted" role="status">
-    {{ unknown_currency_count }} rapport(s) historique(s) sans devise connue sont exclus des totaux financiers.
-    Leurs montants restent consultables dans les fiches.
-  </p>
+  <div class="alert-info mt-6" role="status">
+    {% include "partials/icon.html" with name="alert" class="h-5 w-5 shrink-0" stroke="2.5" %}
+    <span>{{ unknown_currency_count }} rapport(s) historique(s) sans devise connue sont exclus des totaux financiers. Leurs montants restent consultables dans les fiches.</span>
+  </div>
 {% endif %}
 
-<div class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-  <section class="deco-panel">
-    <div class="border-b border-ecclesia-gold/20 px-5 py-4">
-      <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Rapports recents</h2>
+<div class="mt-8 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+  <section class="panel" aria-labelledby="recent-title">
+    <div class="panel-header">
+      <h2 id="recent-title" class="panel-title">Rapports récents</h2>
+      <a class="action-link" href="{% url 'reports:list' %}">Tous{% include "partials/icon.html" with name="arrow-right" stroke="3" %}</a>
     </div>
     <div class="overflow-x-auto">
-      <table class="deco-table">
+      <table class="data-table">
         <thead>
           <tr>
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3">Extension</th>
-            <th class="px-4 py-3">Presence</th>
-            <th class="px-4 py-3">Offrandes</th>
-            <th class="px-4 py-3"></th>
+            <th scope="col">Date</th>
+            <th scope="col">Extension</th>
+            <th scope="col" class="text-right">Présence</th>
+            <th scope="col" class="text-right">Offrandes</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           {% for report in recent_reports %}
             <tr>
-              <td class="px-4 py-3 font-medium">{{ report.service_date }}</td>
-              <td class="px-4 py-3">{{ report.extension.name }}</td>
-              <td class="px-4 py-3">{{ report.total_attendance }}</td>
-              <td class="px-4 py-3">{{ report.total_offerings|floatformat:2 }} {{ report.currency_label }}</td>
-              <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'reports:detail' report.pk %}">Voir</a></td>
+              <td class="font-bold num">{{ report.service_date }}</td>
+              <td>{{ report.extension.name }}</td>
+              <td class="text-right num">{{ report.total_attendance }}</td>
+              <td class="text-right num">{{ report.total_offerings|floatformat:2 }} {{ report.currency_label }}</td>
+              <td class="text-right"><a class="action-link" href="{% url 'reports:detail' report.pk %}">Voir{% include "partials/icon.html" with name="arrow-right" stroke="3" %}</a></td>
             </tr>
           {% empty %}
-            <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="5">Aucun rapport pour le moment.</td></tr>
+            <tr><td class="px-4 py-8 text-center text-bauhaus-slate" colspan="5">Aucun rapport pour le moment.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </section>
 
-  <section class="deco-panel p-5">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Synthese par extension</h2>
-    <div class="mt-4 space-y-3">
+  <section class="block-red p-6 shadow-hard-lg" aria-labelledby="by-extension-title">
+    <p class="text-xs font-bold uppercase tracking-widest text-bauhaus-yellow">Consolidation</p>
+    <h2 id="by-extension-title" class="section-heading mt-2 text-white">Synthèse par extension</h2>
+    <div class="mt-6 space-y-4">
       {% for row in by_extension %}
-        <div class="deco-mini-panel">
-          <div class="flex items-center justify-between gap-3">
-            <p class="font-semibold">{{ row.extension__name }} <span class="text-sm text-ecclesia-muted">({{ row.extension__slug }})</span></p>
-            <p class="text-sm text-ecclesia-muted">{{ row.count }} rapport(s)</p>
+        <div class="mini-panel bg-white">
+          <div class="flex items-start justify-between gap-3">
+            <p class="font-bold uppercase tracking-tight">{{ row.extension__name }}</p>
+            <span class="badge bg-bauhaus-yellow num">{{ row.count }} rapport{{ row.count|pluralize }}</span>
           </div>
-          <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-            <p>Presence: <span class="font-semibold">{{ row.attendance|default:0 }}</span></p>
-            <p>Offrandes:
+          <dl class="mt-3 grid grid-cols-2 gap-3 border-t-2 border-bauhaus-ink pt-3 text-sm">
+            <div>
+              <dt class="text-xs font-bold uppercase tracking-widest text-bauhaus-slate">Présence</dt>
+              <dd class="mt-1 text-xl font-black num">{{ row.attendance|default:0 }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-bold uppercase tracking-widest text-bauhaus-slate">Offrandes</dt>
               {% if row.currency %}
-                <span class="font-semibold">{{ row.total|floatformat:2 }} {{ row.currency }}</span>
+                <dd class="mt-1 text-xl font-black num">{{ row.total|floatformat:2 }} <span class="text-sm font-bold">{{ row.currency }}</span></dd>
               {% else %}
-                <span class="text-ecclesia-muted">Non consolidees : devise historique inconnue</span>
+                <dd class="mt-1 text-sm font-medium text-bauhaus-slate">Non consolidées : devise historique inconnue</dd>
               {% endif %}
-            </p>
-          </div>
+            </div>
+          </dl>
         </div>
       {% empty %}
-        <p class="mt-4 text-sm text-ecclesia-muted">Les indicateurs apparaitront apres les premiers rapports.</p>
+        <p class="text-sm font-medium text-white/90">Les indicateurs apparaîtront après les premiers rapports.</p>
       {% endfor %}
     </div>
   </section>

@@ -1,0 +1,14 @@
+{% comment %}Form field with label, widget, help text and errors. Usage: {% include "partials/field.html" with field=form.name %}{% endcomment %}
+<div class="{{ wrapper_class }}">
+  {% if field.field.widget.input_type == "checkbox" %}
+    <label class="flex min-h-12 cursor-pointer items-center gap-3 normal-case tracking-normal" for="{{ field.id_for_label }}">
+      {{ field }}
+      <span class="text-sm font-bold uppercase tracking-widest">{{ field.label }}</span>
+    </label>
+  {% else %}
+    <label class="mb-2" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-bauhaus-red" aria-hidden="true">*</span>{% endif %}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<p class="field-help" id="{{ field.id_for_label }}-help">{{ field.help_text }}</p>{% endif %}
+  {% for error in field.errors %}<p class="field-error" role="alert">{{ error }}</p>{% endfor %}
+</div>

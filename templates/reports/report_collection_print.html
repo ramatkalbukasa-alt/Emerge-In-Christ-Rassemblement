@@ -1,79 +1,45 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registre des rapports</title>
-  <style>
-    body {
-      background:
-        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
-        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
-        repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
-        #0A0A0A;
-      color: #F2F0E4;
-      font-family: Arial, sans-serif;
-      margin: 32px;
-    }
-    header { border-bottom: 2px double #D4AF37; margin-bottom: 24px; padding-bottom: 16px; }
-    h1 { color: #F2F0E4; font-family: Georgia, serif; font-size: 38px; letter-spacing: 0.18em; margin: 0 0 8px; text-transform: uppercase; }
-    table { background: #141414; border-collapse: collapse; box-shadow: 0 0 18px rgba(212, 175, 55, 0.12); width: 100%; }
-    th, td { border: 1px solid rgba(212, 175, 55, 0.45); padding: 8px 10px; text-align: left; }
-    th { background: rgba(30, 61, 89, 0.45); color: #D4AF37; }
-    .actions { margin-bottom: 24px; }
-    .actions button { border: 1px solid #D4AF37; background: #D4AF37; color: #0A0A0A; cursor: pointer; font-weight: 700; letter-spacing: 0.16em; padding: 12px 16px; text-transform: uppercase; }
-    @media print {
-      body { background: white; color: #111827; margin: 14mm; }
-      header { border-bottom-color: #111827; }
-      h1 { color: #111827; }
-      table { background: white; box-shadow: none; }
-      th, td { border-color: #d1d5db; }
-      th { background: #f3f4f6; color: #111827; }
-      .actions { display: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="actions">
-    <button type="button" onclick="window.print()">Imprimer</button>
-  </div>
-
+{% extends "reports/print_base.html" %}
+{% block title %}Registre des rapports{% endblock %}
+{% block content %}
   <header>
+    <p class="kicker">Ecclessia Manager</p>
     <h1>Registre des rapports</h1>
-    <p>Presences, offrandes, ventilations et soldes par extension.</p>
+    <p>Présences, offrandes, ventilations et soldes par extension.</p>
+    <div class="meta"><span class="fill-yellow">{{ reports|length }} rapport{{ reports|length|pluralize }}</span></div>
   </header>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Extension</th>
-        <th>Devise</th>
-        <th>Type</th>
-        <th>Presence</th>
-        <th>Offrandes</th>
-        <th>Dime</th>
-        <th>Social</th>
-        <th>Solde</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for report in reports %}
+  <div class="table-wrap">
+    <table>
+      <thead>
         <tr>
-          <td>{{ report.service_date }}</td>
-          <td>{{ report.extension.name }}</td>
-          <td>{{ report.currency_label }}</td>
-          <td>{{ report.get_service_type_display }}</td>
-          <td>{{ report.total_attendance }}</td>
-          <td>{{ report.total_offerings|floatformat:2 }}</td>
-          <td>{{ report.tithe_deduction|floatformat:2 }}</td>
-          <td>{{ report.social_deduction|floatformat:2 }}</td>
-          <td>{{ report.net_balance|floatformat:2 }}</td>
+          <th>Date</th>
+          <th>Extension</th>
+          <th>Devise</th>
+          <th>Type</th>
+          <th>Présence</th>
+          <th>Offrandes</th>
+          <th>Dîme</th>
+          <th>Social</th>
+          <th>Solde</th>
         </tr>
-      {% empty %}
-        <tr><td colspan="9">Aucun rapport enregistre.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</body>
-</html>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td>{{ report.service_date }}</td>
+            <td>{{ report.extension.name }}</td>
+            <td>{{ report.currency_label }}</td>
+            <td>{{ report.get_service_type_display }}</td>
+            <td>{{ report.total_attendance }}</td>
+            <td>{{ report.total_offerings|floatformat:2 }}</td>
+            <td>{{ report.tithe_deduction|floatformat:2 }}</td>
+            <td>{{ report.social_deduction|floatformat:2 }}</td>
+            <td><strong>{{ report.net_balance|floatformat:2 }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9">Aucun rapport enregistré.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

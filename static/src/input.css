@@ -8,173 +8,330 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
-    background:
-      radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
-      repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
-      repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
-      #0A0A0A;
+    @apply bg-bauhaus-canvas font-sans font-medium text-bauhaus-ink;
   }
 
-  input,
-  select,
-  textarea {
-    @apply min-h-12 w-full border-0 border-b-2 border-ecclesia-gold/70 bg-transparent px-3 py-2 font-sans text-sm text-ecclesia-cream placeholder:text-ecclesia-pewter transition-all duration-300 focus:border-[#F2E8C4] focus:outline-none focus:ring-0;
-    box-shadow: none;
-  }
-
-  input:focus,
-  select:focus,
-  textarea:focus {
-    box-shadow: 0 8px 18px -14px rgba(212, 175, 55, 0.8);
+  ::selection {
+    @apply bg-bauhaus-yellow text-bauhaus-ink;
   }
 
   label {
-    @apply font-sans text-xs font-bold uppercase tracking-[0.18em] text-ecclesia-gold;
+    @apply block text-xs font-bold uppercase tracking-widest text-bauhaus-ink;
   }
 }
 
 @layer components {
-  .skip-link {
-    @apply fixed left-4 top-4 z-50 -translate-y-24 border border-ecclesia-gold bg-ecclesia-black px-4 py-3 text-sm font-bold uppercase tracking-[0.18em] text-ecclesia-gold transition-transform duration-300 focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+  /* Focus ring shared by every interactive element. */
+  .focus-hard {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-bauhaus-ink focus-visible:ring-offset-2 focus-visible:ring-offset-bauhaus-canvas;
   }
 
-  .metric-card {
-    @apply deco-card p-5;
+  .skip-link {
+    @apply focus-hard fixed left-4 top-4 z-50 -translate-y-24 border-2 border-bauhaus-ink bg-bauhaus-yellow px-4 py-3 text-sm font-bold uppercase tracking-widest text-bauhaus-ink shadow-hard transition-transform duration-200 ease-out focus:translate-y-0;
+  }
+
+  /* Buttons: square by default, `.btn-pill` for the circular variant. */
+  .btn {
+    @apply focus-hard inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-none border-2 border-bauhaus-ink px-5 py-2 text-xs font-bold uppercase tracking-wider shadow-hard transition-all duration-200 ease-out hover:opacity-90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply inline-flex min-h-12 cursor-pointer items-center justify-center border-2 border-ecclesia-gold bg-ecclesia-gold px-5 py-2 font-sans text-xs font-bold uppercase tracking-[0.22em] text-ecclesia-black transition-all duration-300 hover:bg-[#F2E8C4] hover:shadow-[0_0_24px_rgba(212,175,55,0.45)] focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+    @apply btn bg-bauhaus-red text-white;
   }
 
   .btn-secondary {
-    @apply inline-flex min-h-12 cursor-pointer items-center justify-center border border-ecclesia-gold/80 bg-transparent px-5 py-2 font-sans text-xs font-bold uppercase tracking-[0.22em] text-ecclesia-gold transition-all duration-300 hover:bg-ecclesia-blue hover:text-ecclesia-cream hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+    @apply btn bg-bauhaus-blue text-white;
   }
 
-  .deco-card {
-    @apply relative border border-ecclesia-gold/30 bg-ecclesia-charcoal text-ecclesia-cream transition-all duration-500 ease-out;
-    clip-path: polygon(
-      0 14px,
-      14px 14px,
-      14px 0,
-      calc(100% - 14px) 0,
-      calc(100% - 14px) 14px,
-      100% 14px,
-      100% calc(100% - 14px),
-      calc(100% - 14px) calc(100% - 14px),
-      calc(100% - 14px) 100%,
-      14px 100%,
-      14px calc(100% - 14px),
-      0 calc(100% - 14px)
-    );
-    box-shadow: inset 0 0 0 1px rgba(242, 240, 228, 0.04), 0 0 18px rgba(212, 175, 55, 0.08);
+  .btn-yellow {
+    @apply btn bg-bauhaus-yellow text-bauhaus-ink;
   }
 
-  .deco-card::before,
-  .deco-card::after {
+  .btn-outline {
+    @apply btn bg-white text-bauhaus-ink;
+  }
+
+  .btn-ghost {
+    @apply focus-hard inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-none border-2 border-transparent px-4 py-2 text-xs font-bold uppercase tracking-wider text-bauhaus-ink transition-colors duration-200 ease-out hover:bg-bauhaus-muted;
+  }
+
+  .btn-pill {
+    @apply rounded-full px-6;
+  }
+
+  .btn-icon {
+    @apply focus-hard inline-flex h-11 w-11 cursor-pointer items-center justify-center border-2 border-bauhaus-ink bg-white text-bauhaus-ink shadow-hard-sm transition-all duration-200 ease-out active:translate-x-[2px] active:translate-y-[2px] active:shadow-none;
+  }
+
+  /* Cards: white, thick border, hard shadow, optional corner shape. */
+  .card {
+    @apply relative border-2 border-bauhaus-ink bg-white text-bauhaus-ink shadow-hard transition-transform duration-200 ease-out lg:border-4 lg:shadow-hard-lg;
+  }
+
+  .card-lift {
+    @apply hover:-translate-y-1;
+  }
+
+  .card-corner {
+    @apply pointer-events-none absolute right-3 top-3 h-3 w-3 lg:right-4 lg:top-4 lg:h-4 lg:w-4;
+  }
+
+  .metric-card {
+    @apply card card-lift p-5 lg:p-6;
+  }
+
+  .metric-label {
+    @apply text-xs font-bold uppercase tracking-widest text-bauhaus-slate;
+  }
+
+  .metric-value {
+    @apply mt-3 text-3xl font-black leading-none tracking-tighter sm:text-4xl;
+  }
+
+  .panel {
+    @apply card overflow-hidden;
+  }
+
+  .panel-header {
+    @apply flex items-center justify-between gap-3 border-b-2 border-bauhaus-ink px-5 py-4 lg:border-b-4;
+  }
+
+  .panel-title {
+    @apply text-lg font-bold uppercase tracking-wide lg:text-xl;
+  }
+
+  .mini-panel {
+    @apply border-2 border-bauhaus-ink bg-bauhaus-canvas p-3 shadow-hard-sm transition-transform duration-200 ease-out hover:-translate-y-1;
+  }
+
+  /* Solid color blocks used for hero panels and section backgrounds. */
+  .block-red {
+    @apply border-2 border-bauhaus-ink bg-bauhaus-red text-white lg:border-4;
+  }
+
+  .block-blue {
+    @apply border-2 border-bauhaus-ink bg-bauhaus-blue text-white lg:border-4;
+  }
+
+  .block-yellow {
+    @apply border-2 border-bauhaus-ink bg-bauhaus-yellow text-bauhaus-ink lg:border-4;
+  }
+
+  .block-ink {
+    @apply border-2 border-bauhaus-ink bg-bauhaus-ink text-white lg:border-4;
+  }
+
+  /* Typography. */
+  .display-heading {
+    @apply text-4xl font-black uppercase leading-display tracking-tighter sm:text-5xl xl:text-6xl;
+  }
+
+  .section-heading {
+    @apply text-2xl font-bold uppercase tracking-tight sm:text-3xl;
+  }
+
+  .kicker {
+    @apply inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-bauhaus-slate;
+  }
+
+  .kicker::before {
     content: "";
-    @apply pointer-events-none absolute h-6 w-6 border-ecclesia-gold/70 transition-opacity duration-500;
+    @apply inline-block h-2.5 w-2.5 bg-bauhaus-red;
   }
 
-  .deco-card::before {
-    @apply left-2 top-2 border-l-2 border-t-2;
+  .lead {
+    @apply text-base leading-relaxed text-bauhaus-slate lg:text-lg;
   }
 
-  .deco-card::after {
-    @apply bottom-2 right-2 border-b-2 border-r-2;
+  /* Geometric primitives. */
+  .shape-circle {
+    @apply rounded-full;
   }
 
-  .deco-card:hover {
-    @apply -translate-y-2 border-ecclesia-gold;
-    box-shadow: inset 0 0 0 1px rgba(242, 240, 228, 0.06), 0 0 22px rgba(212, 175, 55, 0.18);
+  .shape-square {
+    @apply rounded-none;
   }
 
-  .deco-panel {
-    @apply deco-card;
+  .shape-diamond {
+    @apply rotate-45 rounded-none;
   }
 
-  .deco-heading {
-    @apply font-display text-3xl font-normal uppercase leading-tight tracking-[0.22em] text-ecclesia-cream md:text-5xl xl:text-6xl;
+  .shape-triangle {
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   }
 
-  .deco-kicker {
-    @apply font-sans text-xs font-bold uppercase tracking-[0.26em] text-ecclesia-gold;
+  .brand-mark {
+    @apply flex items-center gap-1;
   }
 
-  .deco-divider {
-    @apply my-4 flex items-center gap-4;
+  .brand-mark > span {
+    @apply block h-5 w-5 border-2 border-bauhaus-ink transition-transform duration-200 ease-out;
   }
 
-  .deco-divider::before,
-  .deco-divider::after {
+  .brand-mark > .shape-triangle {
+    @apply border-0 bg-bauhaus-ink;
+  }
+
+  .brand-mark > .shape-triangle::after {
     content: "";
-    @apply h-px w-20 bg-ecclesia-gold/60;
+    @apply block h-full w-full bg-bauhaus-yellow;
+    clip-path: polygon(50% 14%, 10% 92%, 90% 92%);
   }
 
-  .deco-diamond {
-    @apply flex h-11 w-11 rotate-45 items-center justify-center border border-ecclesia-gold bg-ecclesia-black text-ecclesia-gold shadow-[0_0_14px_rgba(212,175,55,0.22)];
+  .group:hover .brand-mark > span,
+  .brand-mark:hover > span {
+    @apply scale-110;
   }
 
-  .deco-diamond > span {
-    @apply -rotate-45 font-display text-sm uppercase tracking-widest;
+  .dot-grid {
+    @apply bg-dot-grid bg-grid;
   }
 
-  .deco-table {
-    @apply min-w-full divide-y divide-ecclesia-gold/20 text-sm text-ecclesia-cream;
+  .dot-grid-light {
+    @apply bg-dot-grid-light bg-grid;
   }
 
-  .deco-table thead {
-    @apply bg-ecclesia-blue/30 text-left text-xs font-bold uppercase tracking-[0.2em] text-ecclesia-gold;
+  /* Navigation. */
+  .nav-link {
+    @apply focus-hard flex min-h-12 items-center gap-3 border-l-4 border-transparent px-4 py-3 text-sm font-bold uppercase tracking-wider text-bauhaus-ink transition-colors duration-200 ease-out hover:border-bauhaus-red hover:bg-bauhaus-muted;
   }
 
-  .deco-table tbody {
-    @apply divide-y divide-ecclesia-gold/15;
+  .nav-link[aria-current="page"] {
+    @apply border-bauhaus-ink bg-bauhaus-yellow;
   }
 
-  .deco-table tr {
-    @apply transition-colors duration-300 hover:bg-ecclesia-gold/5;
+  .nav-link > .nav-shape {
+    @apply block h-3 w-3 shrink-0 border-2 border-bauhaus-ink;
   }
 
-  .deco-action {
-    @apply inline-flex min-h-11 cursor-pointer items-center gap-2 border-b border-ecclesia-gold/60 px-1 py-2 font-sans text-xs font-bold uppercase tracking-[0.18em] text-ecclesia-gold transition-all duration-300 hover:border-ecclesia-gold hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold focus:ring-offset-2 focus:ring-offset-ecclesia-black;
+  .nav-link > .nav-shape.shape-triangle {
+    @apply border-0;
   }
 
-  .deco-action::after {
-    content: "->";
-    @apply text-ecclesia-gold transition-transform duration-300;
+  /* Tables. */
+  .data-table {
+    @apply min-w-full border-collapse text-sm;
   }
 
-  .deco-action:hover::after {
+  .data-table thead {
+    @apply bg-bauhaus-ink text-left text-xs font-bold uppercase tracking-widest text-white;
+  }
+
+  .data-table th {
+    @apply px-4 py-3;
+  }
+
+  .data-table td {
+    @apply px-4 py-3;
+  }
+
+  .data-table tbody tr {
+    @apply border-t-2 border-bauhaus-ink transition-colors duration-200 ease-out hover:bg-bauhaus-cream;
+  }
+
+  .data-table tbody tr:first-child {
+    @apply border-t-0;
+  }
+
+  .num {
+    @apply tabular-nums;
+  }
+
+  .action-link {
+    @apply focus-hard inline-flex min-h-11 cursor-pointer items-center gap-2 border-b-2 border-bauhaus-ink px-1 py-2 text-xs font-bold uppercase tracking-wider text-bauhaus-ink transition-colors duration-200 ease-out hover:text-bauhaus-blue;
+  }
+
+  .action-link > svg {
+    @apply h-4 w-4 transition-transform duration-200 ease-out;
+  }
+
+  .action-link:hover > svg {
     @apply translate-x-1;
   }
 
-  .deco-mini-panel {
-    @apply border border-ecclesia-gold/25 bg-ecclesia-black/40 p-3 transition-all duration-300 hover:border-ecclesia-gold hover:shadow-[0_0_16px_rgba(212,175,55,0.16)];
-    clip-path: polygon(0 8px, 8px 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  /* Forms. */
+  .form-control {
+    @apply focus-hard min-h-12 w-full rounded-none border-2 border-bauhaus-ink bg-white px-3 py-2 font-sans text-base text-bauhaus-ink placeholder:text-bauhaus-slate/70 transition-shadow duration-200 ease-out focus:shadow-hard;
   }
 
-  .form-control {
-    @apply min-h-12 w-full border-0 border-b-2 border-ecclesia-gold/70 bg-transparent px-3 py-2 font-sans text-sm text-ecclesia-cream transition-all duration-300 focus:border-[#F2E8C4] focus:outline-none focus:ring-0;
+  select.form-control {
+    @apply appearance-none bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23121212' stroke-width='3' stroke-linecap='square'><path d='m6 9 6 6 6-6'/></svg>");
+    background-position: right 0.75rem center;
+    background-size: 1rem 1rem;
+  }
+
+  textarea.form-control {
+    @apply min-h-24;
+  }
+
+  input[type="checkbox"].form-control {
+    @apply h-6 w-6 min-h-0 cursor-pointer appearance-none p-0 checked:bg-bauhaus-red focus:shadow-none;
+  }
+
+  input[type="color"].form-control {
+    @apply cursor-pointer p-1;
+  }
+
+  .field-error {
+    @apply mt-1 text-sm font-bold text-bauhaus-red;
+  }
+
+  .field-help {
+    @apply mt-1 text-sm text-bauhaus-slate;
+  }
+
+  /* Messages and alerts. */
+  .alert {
+    @apply flex items-start gap-3 border-2 border-bauhaus-ink px-4 py-3 text-sm font-medium shadow-hard;
+  }
+
+  .alert-info {
+    @apply alert bg-bauhaus-cream text-bauhaus-ink;
+  }
+
+  .alert-error {
+    @apply alert bg-bauhaus-red text-white;
+  }
+
+  .alert-success {
+    @apply alert bg-bauhaus-blue text-white;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 border-2 border-bauhaus-ink px-2 py-0.5 text-xs font-bold uppercase tracking-wider;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .btn-primary,
-    .btn-secondary,
-    .deco-action,
-    .deco-card,
-    .deco-card::before,
-    .deco-card::after,
-    .deco-table tr,
-    .form-control {
+    .btn,
+    .btn-ghost,
+    .btn-icon,
+    .card,
+    .mini-panel,
+    .nav-link,
+    .action-link,
+    .action-link > svg,
+    .brand-mark > span,
+    .form-control,
+    .skip-link {
       transition-duration: 1ms;
     }
 
-    .deco-card:hover,
-    .deco-action:hover::after {
+    .card-lift:hover,
+    .mini-panel:hover,
+    .action-link:hover > svg,
+    .brand-mark:hover > span {
       transform: none;
     }
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
   }
 }

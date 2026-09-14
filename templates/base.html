@@ -4,74 +4,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F0C020">
   <title>{% block title %}Ecclessia Manager{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  {% if debug %}
-    <script src="https://cdn.tailwindcss.com"></script>
-  {% endif %}
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="min-h-screen bg-ecclesia-wash text-ecclesia-ink antialiased">
+<body class="min-h-screen antialiased">
   <a class="skip-link" href="#main-content">Aller au contenu</a>
-  <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
+  <div x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false" class="min-h-screen lg:flex">
     {% if user.is_authenticated %}
-      <aside class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-ecclesia-gold/30 bg-ecclesia-black/95 transition-transform lg:static lg:translate-x-0"
-             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="flex h-20 items-center border-b border-ecclesia-gold/25 px-5">
-          <div class="deco-diamond"><span>EM</span></div>
-          <div class="ml-3">
-            <p class="font-display text-sm uppercase tracking-[0.22em] text-ecclesia-cream">Ecclessia</p>
-            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">Manager</p>
-          </div>
+      {% with view_name=request.resolver_match.view_name %}
+      <div x-show="sidebarOpen" x-cloak x-transition.opacity.duration.200ms @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-bauhaus-ink/60 lg:hidden" aria-hidden="true"></div>
+      <aside id="sidebar"
+             class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r-4 border-bauhaus-ink bg-white transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
+             :class="sidebarOpen ? 'translate-x-0 shadow-hard-lg' : '-translate-x-full lg:translate-x-0'"
+             aria-label="Navigation principale">
+        <div class="flex h-20 items-center justify-between border-b-4 border-bauhaus-ink px-5">
+          <a class="group focus-hard flex items-center gap-3" href="{% url 'dashboard:home' %}">
+            <span class="brand-mark" aria-hidden="true">
+              <span class="shape-circle bg-bauhaus-red"></span>
+              <span class="shape-square bg-bauhaus-blue"></span>
+              <span class="shape-triangle"></span>
+            </span>
+            <span>
+              <span class="block text-sm font-black uppercase leading-none tracking-tight">Ecclessia</span>
+              <span class="block text-xs font-bold uppercase tracking-widest text-bauhaus-slate">Manager</span>
+            </span>
+          </a>
+          <button type="button" class="btn-icon lg:hidden" @click="sidebarOpen = false" aria-label="Fermer le menu">
+            {% include "partials/icon.html" with name="x" class="h-5 w-5" stroke="3" %}
+          </button>
         </div>
-        <nav class="space-y-6 px-3 py-5 text-sm">
+        <nav class="flex-1 space-y-8 py-6">
           <div>
-            <p class="px-3 pb-3 text-xs font-bold uppercase tracking-[0.24em] text-ecclesia-gold">General</p>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'dashboard:home' %}">Tableau de bord</a>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'reports:list' %}">Rapports</a>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'reports:create' %}">Nouveau rapport</a>
-            {% if user.profile.role == "admin" %}
-              <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'churches:list' %}">Extensions</a>
-            {% endif %}
+            <p class="px-5 pb-3 text-xs font-bold uppercase tracking-widest text-bauhaus-slate">Général</p>
+            <a class="nav-link" href="{% url 'dashboard:home' %}" {% if view_name == "dashboard:home" %}aria-current="page"{% endif %}>
+              <span class="nav-shape shape-circle bg-bauhaus-red" aria-hidden="true"></span>Tableau de bord
+            </a>
+            <a class="nav-link" href="{% url 'reports:list' %}" {% if view_name == "reports:list" or view_name == "reports:detail" %}aria-current="page"{% endif %}>
+              <span class="nav-shape shape-square bg-bauhaus-blue" aria-hidden="true"></span>Rapports
+            </a>
+            <a class="nav-link" href="{% url 'reports:create' %}" {% if view_name == "reports:create" %}aria-current="page"{% endif %}>
+              <span class="nav-shape shape-triangle border-0 bg-bauhaus-yellow" aria-hidden="true"></span>Nouveau rapport
+            </a>
           </div>
+          {% if user.profile.role == "admin" %}
+            <div>
+              <p class="px-5 pb-3 text-xs font-bold uppercase tracking-widest text-bauhaus-slate">Administration</p>
+              <a class="nav-link" href="{% url 'churches:list' %}" {% if view_name == "churches:list" or view_name == "churches:create" or view_name == "churches:update" %}aria-current="page"{% endif %}>
+                <span class="nav-shape shape-diamond bg-bauhaus-red" aria-hidden="true"></span>Extensions
+              </a>
+            </div>
+          {% endif %}
         </nav>
+        <div class="border-t-4 border-bauhaus-ink bg-bauhaus-yellow px-5 py-4">
+          <p class="truncate text-sm font-black uppercase tracking-tight">{{ user.get_full_name|default:user.username }}</p>
+          <p class="text-xs font-bold uppercase tracking-widest">{{ user.profile.get_role_display|default:"Compte" }}</p>
+        </div>
       </aside>
+      {% endwith %}
     {% endif %}
 
     <main id="main-content" class="min-w-0 flex-1" tabindex="-1">
       {% if user.is_authenticated %}
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ecclesia-gold/25 bg-ecclesia-black/90 px-4 backdrop-blur lg:px-8">
-          <button type="button" class="inline-flex h-11 w-11 cursor-pointer items-center justify-center border border-ecclesia-gold text-ecclesia-gold lg:hidden" @click="sidebarOpen = true" aria-label="Ouvrir le menu">
-            <span class="h-0.5 w-5 bg-ecclesia-gold"></span>
-          </button>
-          <div>
-            <p class="text-sm font-bold uppercase tracking-[0.18em] text-ecclesia-cream">{{ user.get_full_name|default:user.username }}</p>
-            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">{{ user.profile.get_role_display }}</p>
+        <header class="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b-4 border-bauhaus-ink bg-bauhaus-canvas px-4 lg:h-20 lg:px-8">
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn-icon lg:hidden" @click="sidebarOpen = true" aria-label="Ouvrir le menu" aria-controls="sidebar" :aria-expanded="sidebarOpen">
+              {% include "partials/icon.html" with name="menu" class="h-5 w-5" stroke="3" %}
+            </button>
+            <span class="brand-mark lg:hidden" aria-hidden="true">
+              <span class="shape-circle bg-bauhaus-red"></span>
+              <span class="shape-square bg-bauhaus-blue"></span>
+              <span class="shape-triangle"></span>
+            </span>
+            <p class="hidden text-xs font-bold uppercase tracking-widest text-bauhaus-slate sm:block">{% block header_kicker %}Emerge in Christ · Rassemblement{% endblock %}</p>
           </div>
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button class="btn-secondary" type="submit">Deconnexion</button>
+            <button class="btn-outline" type="submit">
+              {% include "partials/icon.html" with name="log-out" class="h-4 w-4" stroke="3" %}
+              <span class="hidden sm:inline">Déconnexion</span>
+            </button>
           </form>
         </header>
       {% endif %}
 
-      <div class="{% if user.is_authenticated %}p-4 lg:p-8{% endif %}">
+      <div class="{% if user.is_authenticated %}mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12{% endif %}">
         {% if user.is_authenticated %}
           <div
             x-data="reportRealtime()"
             x-init="connect()"
             x-show="message"
             x-cloak
-            class="mb-4 border border-ecclesia-gold bg-ecclesia-gold/10 px-4 py-3 text-sm text-ecclesia-cream shadow-[0_0_18px_rgba(212,175,55,0.16)]"
+            x-transition.duration.200ms
+            class="alert-info mb-6"
+            role="status"
+            aria-live="polite"
           >
+            <span class="mt-0.5 block h-3 w-3 shrink-0 shape-circle bg-bauhaus-red" aria-hidden="true"></span>
             <span x-text="message"></span>
           </div>
         {% endif %}
         {% for message in messages %}
-          <div class="mb-4 border border-ecclesia-gold/40 bg-ecclesia-charcoal px-4 py-3 text-sm text-ecclesia-cream">{{ message }}</div>
+          <div class="alert-info mb-6" role="status">
+            <span class="mt-0.5 block h-3 w-3 shrink-0 shape-square bg-bauhaus-blue" aria-hidden="true"></span>
+            <span>{{ message }}</span>
+          </div>
         {% endfor %}
         {% block content %}{% endblock %}
       </div>
@@ -89,7 +130,7 @@
             this.socket.onmessage = (event) => {
               const payload = JSON.parse(event.data);
               if (payload.type === "report.created") {
-                this.message = `Nouveau rapport: ${payload.extension} (${payload.service_date})`;
+                this.message = `Nouveau rapport : ${payload.extension} (${payload.service_date})`;
                 window.setTimeout(() => { this.message = ""; }, 6000);
               }
             };

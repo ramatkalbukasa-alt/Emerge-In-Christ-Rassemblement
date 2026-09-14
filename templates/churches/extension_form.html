@@ -1,25 +1,66 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} - Ecclessia Manager{% endblock %}
+{% block header_kicker %}Extensions{% endblock %}
 {% block content %}
-<div class="mb-6">
-  <p class="deco-kicker">Extension</p>
-  <h1 class="deco-heading mt-2">{{ title }}</h1>
-  <p class="mt-1 text-sm text-ecclesia-muted">Informations administratives et responsables locaux.</p>
+<a class="action-link mb-6" href="{% url 'churches:list' %}">{% include "partials/icon.html" with name="arrow-left" stroke="3" %}Retour aux extensions</a>
+
+<div class="border-b-4 border-bauhaus-ink pb-8">
+  <p class="kicker">Extension</p>
+  <h1 class="display-heading mt-3">{{ title }}</h1>
+  <p class="lead mt-3 max-w-xl">Informations administratives, responsables locaux et devise de gestion.</p>
 </div>
-<form method="post" class="deco-card p-6">
+
+<form method="post" class="mt-8 space-y-8" novalidate>
   {% csrf_token %}
-  <div class="grid gap-4 md:grid-cols-2">
-    {% for field in form %}
-      <div {% if field.name == "address" %}class="md:col-span-2"{% endif %}>
-        <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
-      </div>
-    {% endfor %}
-  </div>
-  <div class="mt-6 flex gap-3">
-    <button class="btn-primary" type="submit">Enregistrer</button>
-    <a class="btn-secondary" href="{% url 'churches:list' %}">Annuler</a>
+  {% if form.non_field_errors %}
+    <div class="alert-error" role="alert">
+      {% include "partials/icon.html" with name="alert" class="h-5 w-5 shrink-0" stroke="2.5" %}
+      <div>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    </div>
+  {% endif %}
+
+  <section class="card p-6 lg:p-8" aria-labelledby="ext-identite">
+    <span class="card-corner shape-circle bg-bauhaus-red" aria-hidden="true"></span>
+    <h2 id="ext-identite" class="section-heading">Identité</h2>
+    <div class="mt-6 grid gap-5 md:grid-cols-2">
+      {% include "partials/field.html" with field=form.name %}
+      {% include "partials/field.html" with field=form.slug %}
+      {% include "partials/field.html" with field=form.color %}
+      {% include "partials/field.html" with field=form.created_on %}
+      {% include "partials/field.html" with field=form.city %}
+      {% include "partials/field.html" with field=form.country %}
+      {% include "partials/field.html" with field=form.address wrapper_class="md:col-span-2" %}
+    </div>
+  </section>
+
+  <section class="card p-6 lg:p-8" aria-labelledby="ext-responsables">
+    <span class="card-corner shape-square bg-bauhaus-blue" aria-hidden="true"></span>
+    <h2 id="ext-responsables" class="section-heading">Responsables</h2>
+    <div class="mt-6 grid gap-5 md:grid-cols-2">
+      {% include "partials/field.html" with field=form.pastor_name %}
+      {% include "partials/field.html" with field=form.pastor_email %}
+      {% include "partials/field.html" with field=form.pastor_phone %}
+      {% include "partials/field.html" with field=form.coordinator %}
+      {% include "partials/field.html" with field=form.secretary %}
+      {% include "partials/field.html" with field=form.treasurer %}
+    </div>
+  </section>
+
+  <section class="card p-6 lg:p-8" aria-labelledby="ext-gestion">
+    <span class="card-corner shape-triangle bg-bauhaus-yellow" aria-hidden="true"></span>
+    <h2 id="ext-gestion" class="section-heading">Gestion</h2>
+    <div class="mt-6 grid gap-5 md:grid-cols-2">
+      {% include "partials/field.html" with field=form.currency %}
+      {% include "partials/field.html" with field=form.currency_symbol %}
+      {% include "partials/field.html" with field=form.is_active wrapper_class="md:col-span-2" %}
+    </div>
+  </section>
+
+  <div class="flex flex-col gap-3 border-t-4 border-bauhaus-ink pt-8 sm:flex-row sm:items-center">
+    <button class="btn-primary" type="submit">
+      {% include "partials/icon.html" with name="check" class="h-4 w-4" stroke="3" %}Enregistrer
+    </button>
+    <a class="btn-ghost" href="{% url 'churches:list' %}">Annuler</a>
   </div>
 </form>
 {% endblock %}
