@@ -7,20 +7,6 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        ecclesia: {
-          ink: "#0F172A",
-          muted: "#64748B",
-          line: "#E2E8F0",
-          paper: "#FFFFFF",
-          wash: "#FAFAFA",
-          green: "#D4AF37",
-          gold: "#B91C1C", // Primary red
-          blue: "#D4AF37", // Secondary gold
-          black: "#0F172A", // Slate background for dark/inverted areas
-          cream: "#FFFFFF", // Light text for dark areas
-          charcoal: "#FFFFFF", // Card backgrounds
-          pewter: "#94A3B8"
-        },
         // ── Linear / Modern design system ──────────────────────────────
         bg: {
           deep: "#020203",

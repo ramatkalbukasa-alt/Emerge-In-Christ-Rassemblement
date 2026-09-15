@@ -8,7 +8,12 @@
     <h1 class="deco-heading mt-2">Extensions</h1>
     <p class="mt-1 text-sm text-fg-muted">Sites locaux, responsables et devise de gestion.</p>
   </div>
-  <a class="btn-primary" href="{% url 'churches:create' %}">Ajouter</a>
+  <a class="btn-primary flex items-center" href="{% url 'churches:create' %}">
+    <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Ajouter une extension
+  </a>
 </div>
 
 <section class="deco-panel overflow-hidden">
@@ -40,7 +45,7 @@
             <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'churches:update' extension.slug %}">Modifier</a></td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-6 text-fg-muted" colspan="6">Aucune extension creee.</td></tr>
+          <tr><td class="px-4 py-6 text-fg-muted" colspan="6">Aucune extension créée pour le moment.</td></tr>
         {% endfor %}
       </tbody>
     </table>

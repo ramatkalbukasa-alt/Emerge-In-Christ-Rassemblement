@@ -9,35 +9,40 @@
     <h1 class="deco-heading">Recettes supplémentaires</h1>
     <p class="mt-1 text-sm text-fg-muted">Gérez vos autres entrées financières.</p>
   </div>
-  <a class="btn-primary" href="{% url 'reports:extra_income_create' %}">+ Nouvelle recette</a>
+  <a class="btn-primary flex items-center" href="{% url 'reports:extra_income_create' %}">
+    <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Nouvelle recette
+  </a>
 </div>
 
-<div class="deco-card overflow-hidden">
+<section class="deco-panel overflow-hidden">
   <div class="overflow-x-auto">
-    <table class="w-full text-left text-sm">
-      <thead class="border-b border-black/[0.08] bg-black/[0.02] text-fg-muted">
+    <table class="deco-table">
+      <thead>
         <tr>
-          <th class="px-6 py-3 font-semibold uppercase">Date</th>
-          <th class="px-6 py-3 font-semibold uppercase">Extension</th>
-          <th class="px-6 py-3 font-semibold uppercase">Description</th>
-          <th class="px-6 py-3 font-semibold uppercase text-right">Montant</th>
+          <th class="px-6 py-4">Date</th>
+          <th class="px-6 py-4">Extension</th>
+          <th class="px-6 py-4">Description</th>
+          <th class="px-6 py-4 text-right">Montant</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-black/[0.05]">
+      <tbody>
         {% for item in incomes %}
-          <tr class="hover:bg-black/[0.03]">
-            <td class="px-6 py-4 text-fg-muted">{{ item.income_date|date:"d/m/Y" }}</td>
-            <td class="px-6 py-4 font-medium text-fg">{{ item.extension.name }}</td>
+          <tr>
+            <td class="px-6 py-4 font-mono text-xs text-fg-muted whitespace-nowrap">{{ item.income_date|date:"d/m/Y" }}</td>
+            <td class="px-6 py-4 font-semibold text-fg">{{ item.extension.name }}</td>
             <td class="px-6 py-4 text-fg-muted">{{ item.description|default:"-" }}</td>
-            <td class="px-6 py-4 text-right font-semibold text-bronze">{{ item.amount }}</td>
+            <td class="px-6 py-4 text-right font-mono font-semibold text-bronze whitespace-nowrap">{{ item.amount }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td class="px-6 py-8 text-center text-fg-muted" colspan="4">Aucune recette supplémentaire.</td>
+            <td class="px-6 py-10 text-center text-sm text-fg-muted" colspan="4">Aucune recette supplémentaire enregistrée.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</div>
+</section>
 {% endblock %}

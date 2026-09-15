@@ -16,6 +16,19 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
+# ── Production hardening (Render sits behind a TLS-terminating proxy) ──────
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS is opt-in: onrender.com is a shared domain, so SECURE_HSTS_SECONDS
+    # is left at 0 by default to avoid affecting other apps on the same
+    # public suffix. Set HSTS_SECONDS once a custom domain is configured.
+    SECURE_HSTS_SECONDS = int(os.environ.get("HSTS_SECONDS", 0))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
+
 INSTALLED_APPS = [
     "daphne",
     "django.contrib.admin",
