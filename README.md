@@ -61,49 +61,7 @@ pip install -r requirements.txt && npm install && npm run build:css && python ma
 python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
 ```
 
-### Deploiement manuel (sans Blueprint)
-
-Si vous preferez creer les services a la main dans le Dashboard Render plutot
-que via `render.yaml` :
-
-1. **Base de donnees** : New → PostgreSQL. Notez l'`Internal Database URL`
-   une fois provisionnee.
-2. **Redis** : New → Redis (plan Free ou superieur). Notez son
-   `Internal Redis URL`.
-3. **Web Service** : New → Web Service → connectez le depot Git.
-   - Runtime : `Python 3` (Node/npm sont deja inclus dans l'image native,
-     inutile d'ajouter un service Node separe).
-   - Build Command :
-     ```bash
-     pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput
-     ```
-   - Start Command :
-     ```bash
-     python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
-     ```
-   - Variables d'environnement a definir dans l'onglet *Environment* :
-
-     | Variable | Valeur |
-     | --- | --- |
-     | `DJANGO_SETTINGS_MODULE` | `ecclessia_manager.settings` |
-     | `PYTHON_VERSION` | `3.11.9` |
-     | `SECRET_KEY` | generer une valeur aleatoire longue (bouton *Generate*) |
-     | `DEBUG` | `False` |
-     | `ALLOWED_HOSTS` | `<votre-service>.onrender.com` (ajoutez votre domaine perso le cas echeant) |
-     | `CSRF_TRUSTED_ORIGINS` | `https://<votre-service>.onrender.com` |
-     | `DATABASE_URL` | Internal Database URL de l'etape 1 |
-     | `REDIS_URL` | Internal Redis URL de l'etape 2 |
-     | `HSTS_SECONDS` *(optionnel)* | a definir uniquement une fois un domaine personnalise stable en HTTPS confirme (ex. `604800` pour 7 jours) |
-
-4. Lancez le premier deploiement (*Manual Deploy* → *Deploy latest commit*).
-5. Une fois en ligne, creez un compte admin :
-   ```bash
-   python manage.py createsuperuser
-   ```
-   via le *Shell* du service dans le Dashboard Render, ou `manage.py seed_demo`
-   pour des donnees de demonstration (a ne pas utiliser en production reelle,
-   les identifiants du jeu de demo sont publics dans ce README).
-
-Ce chemin manuel utilise exactement les memes commandes que `render.yaml` :
-les deux approches produisent un service identique.
+Guide complet (Blueprint automatique **ou** creation manuelle des services,
+variables d'environnement, post-deploiement, securite, depannage) :
+voir **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
 # ECCLESIA-MANAGER
