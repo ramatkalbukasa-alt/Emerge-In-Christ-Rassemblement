@@ -1,74 +1,563 @@
+{% load static %}
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rapport {{ report.service_date }} - {{ report.extension.name }}</title>
+  <title>Rapport {{ report.service_date|date:"d/m/Y" }} — {{ report.extension.name }}</title>
   <style>
-    body {
-      background:
-        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
-        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
-        repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
-        #0A0A0A;
-      color: #F2F0E4;
-      font-family: Arial, sans-serif;
-      margin: 32px;
+
+    :root {
+      --blue-dark: #C90800;
+      --blue-mid: #9A642E;
+      --gold: #FFD84D;
+      --slate: #2c3e50;
+      --gray-light: #f5f7fa;
+      --gray-border: #dde3ec;
+      --red: #c0392b;
+      --green: #1a7a4a;
     }
-    header { border-bottom: 2px double #D4AF37; margin-bottom: 24px; padding-bottom: 16px; }
-    h1 { color: #F2F0E4; font-family: Georgia, serif; font-size: 38px; letter-spacing: 0.18em; margin: 0 0 8px; text-transform: uppercase; }
-    h2 { color: #D4AF37; font-size: 18px; letter-spacing: 0.16em; margin: 24px 0 10px; text-transform: uppercase; }
-    table { background: #141414; border-collapse: collapse; box-shadow: 0 0 18px rgba(212, 175, 55, 0.12); margin-bottom: 18px; width: 100%; }
-    th, td { border: 1px solid rgba(212, 175, 55, 0.45); padding: 8px 10px; text-align: left; }
-    th { background: rgba(30, 61, 89, 0.45); color: #D4AF37; }
-    .actions { margin-bottom: 24px; }
-    .actions button { border: 1px solid #D4AF37; background: #D4AF37; color: #0A0A0A; cursor: pointer; font-weight: 700; letter-spacing: 0.16em; padding: 12px 16px; text-transform: uppercase; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 10pt;
+      color: #1a1a2e;
+      background: #eef1f7;
+      padding: 24px 12px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* ── Barre d'actions (masquée à l'impression) ── */
+    .no-print-bar {
+      max-width: 210mm;
+      margin: 0 auto 16px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-print {
+      background: var(--blue-dark);
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      font-size: 9pt;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-print:hover { background: var(--blue-mid); }
+    .btn-back {
+      color: #555;
+      text-decoration: none;
+      font-size: 9pt;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-back:hover { color: #222; }
+
+    /* ── Feuille A4 ── */
+    .a4-page {
+      background: #fff;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 16mm 18mm 14mm 18mm;
+      box-shadow: 0 8px 32px rgba(0,0,0,.12);
+      border: 1px solid var(--gray-border);
+      position: relative;
+    }
+
+    /* ── En-tête aligné à gauche ── */
+    .doc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-border);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .doc-header .logo-wrap {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .doc-header .logo-wrap img {
+      height: 40px;
+      object-fit: contain;
+    }
+    .logo-placeholder {
+      width: 36px; height: 36px;
+      background: var(--blue-dark);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 14pt;
+    }
+    .doc-header .doc-header-text { flex: 1 1 auto; }
+    .doc-header h1 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: var(--blue-dark);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .doc-header h2 {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 3px 0 2px 0;
+      border: none;
+      padding: 0;
+    }
+    .doc-header .doc-date {
+      font-size: 8.5pt;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+
+    /* ── Sections ── */
+    .section-title {
+      display: inline-block;
+      background: none;
+      color: var(--blue-dark);
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0 0 4px 0;
+      margin: 16px 0 8px 0;
+      border-bottom: 2px solid var(--blue-dark);
+    }
+
+    /* ── Grille infos culte ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .info-cell {
+      padding: 7px 14px;
+      font-size: 9pt;
+      display: flex;
+      gap: 4px;
+    }
+    .info-cell .lbl { color: #64748b; min-width: 80px; font-weight: 500; }
+    .info-cell .val { color: #111; font-weight: 600; }
+
+    /* ── Tables générales ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--gray-border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 9pt;
+    }
+    th, td { border-bottom: 1px solid var(--gray-border); padding: 6px 10px; }
+    thead th {
+      background: #fff;
+      color: var(--blue-dark);
+      font-weight: 700;
+      font-size: 8pt;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--gray-border);
+    }
+    tbody td { color: #222; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Table Effectif ── */
+    .tbl-effectif thead th { text-align: center; color: #64748b; }
+    .tbl-effectif td { text-align: center; font-weight: 700; font-size: 12pt; color: var(--blue-dark); border-bottom: none; }
+    .tbl-effectif td.total { color: var(--blue-dark); font-size: 14pt; }
+
+    /* ── Table Recettes ── */
+    .tbl-recettes td:first-child { font-weight: 500; }
+    .tbl-recettes td:not(:first-child) { text-align: right; font-family: monospace; font-size: 9pt; }
+    .tbl-recettes tfoot td {
+      font-weight: 700;
+      background: #eaf1fb;
+      color: var(--blue-dark);
+      text-align: right;
+      border-bottom: none;
+    }
+    .tbl-recettes tfoot td:first-child { text-align: left; }
+
+    /* ── Table Dépenses ── */
+    .tbl-depenses thead th { background: #fdf6e3; color: #8a6d1f; border-bottom: 2px solid #f0e2b8; }
+    .tbl-depenses td { font-size: 9pt; }
+    .tbl-depenses td:nth-child(1) { text-align: center; width: 40px; }
+    .tbl-depenses td:nth-child(2) { text-align: right; font-family: monospace; width: 120px; }
+    .tbl-depenses tfoot td {
+      font-weight: 700;
+      background: #fdf6e3;
+      text-align: right;
+      border-bottom: none;
+    }
+    .tbl-depenses tfoot td:first-child { text-align: left; }
+
+    /* ── Reste Final ── */
+    .reste-final-wrap {
+      margin: 12px 0 0 0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .reste-box {
+      border: 2.5px solid var(--blue-dark);
+      border-radius: 6px;
+      padding: 8px 20px;
+      display: inline-block;
+    }
+    .reste-box .lbl-reste {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--blue-dark);
+      margin-bottom: 2px;
+    }
+    .reste-box .val-reste {
+      font-size: 16pt;
+      font-weight: 700;
+      color: var(--blue-dark);
+    }
+    .reste-box .val-reste.negative { color: var(--red); }
+    .reste-usd {
+      font-size: 9pt;
+      color: #666;
+    }
+    .reste-usd span { font-weight: 600; color: #2a6e3f; }
+
+    /* ── Signatures ── */
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+      border-top: 1.5px solid var(--gray-border);
+      padding-top: 10px;
+    }
+    .sig-box { text-align: center; }
+    .sig-box .sig-role {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue-dark);
+      margin-bottom: 20px;
+    }
+    .sig-box .sig-name {
+      font-size: 8.5pt;
+      color: #444;
+      border-top: 1px solid #aaa;
+      padding-top: 4px;
+    }
+
+    /* ── Pied de page ── */
+    .doc-footer {
+      margin-top: 16px;
+      border-top: 1px solid var(--gray-border);
+      padding-top: 6px;
+      font-size: 7.5pt;
+      color: #888;
+      text-align: center;
+    }
+
+    /* ── Impression ── */
     @media print {
-      body { background: white; color: #111827; margin: 18mm; }
-      header { border-bottom-color: #111827; }
-      h1, h2 { color: #111827; }
-      table { background: white; box-shadow: none; }
-      th, td { border-color: #d1d5db; }
-      th { background: #f3f4f6; color: #111827; }
-      .actions { display: none; }
+      body { background: #fff; padding: 0; }
+      .no-print { display: none !important; }
+      .a4-page {
+        width: 100%; min-height: auto; padding: 10mm 12mm;
+        box-shadow: none; border: none; margin: 0;
+      }
+      thead th { background: #FFF6E5 !important; }
+      .tbl-recettes tfoot td { background: #FFF1D0 !important; }
+      .tbl-depenses tfoot td { background: #fef0e6 !important; }
+      .tbl-effectif td.total { background: var(--blue-dark) !important; color: #fff !important; }
     }
   </style>
+  <link rel="stylesheet" href="{% static 'css/print.css' %}">
 </head>
 <body>
-  <div class="actions">
-    <button type="button" onclick="window.print()">Imprimer</button>
+
+  <!-- Barre d'actions -->
+  <div class="no-print-bar no-print">
+    <a href="{% url 'reports:detail' report.pk %}" class="btn-back">
+      ← Retour au rapport
+    </a>
+    <button type="button" class="btn-print" onclick="window.print()">
+      Imprimer le rapport
+    </button>
   </div>
 
-  <header>
-    <h1>{{ report.extension.name }}</h1>
-    <p>{{ report.get_service_type_display }} du {{ report.service_date }}</p>
-    {% if report.preacher %}<p>Predicateur: {{ report.preacher }}</p>{% endif %}
-    {% if report.theme %}<p>Theme: {{ report.theme }}</p>{% endif %}
-  </header>
+  <!-- Feuille A4 -->
+  <div class="a4-page">
 
-  <h2>Presence</h2>
-  <table>
-    <tbody>
-      <tr><th>Hommes</th><td>{{ report.men_count }}</td><th>Femmes</th><td>{{ report.women_count }}</td></tr>
-      <tr><th>Enfants</th><td>{{ report.children_count }}</td><th>Visiteurs</th><td>{{ report.visitors_count }}</td></tr>
-      <tr><th>Total</th><td colspan="3">{{ report.total_attendance }}</td></tr>
-    </tbody>
-  </table>
+    <!-- En-tête aligné à gauche -->
+    <div class="doc-header">
+      <div class="logo-wrap">
+        {% include "includes/brand_symbol.html" %}
+      </div>
+      <div class="doc-header-text">
+        <h1>{{ report.extension.name }}</h1>
+        <h2>Rapport de Culte</h2>
+        <div class="doc-date">{{ report.service_date|date:"d F Y" }}</div>
+      </div>
+    </div>
 
-  <h2>Finances</h2>
-  <table>
-    <tbody>
-      <tr><th>Offrandes ordinaires</th><td>{{ report.offering_regular }}</td><th>Offrande orateur</th><td>{{ report.offering_preacher }}</td></tr>
-      <tr><th>Dimes</th><td>{{ report.offering_tithe }}</td><th>Actions de grace</th><td>{{ report.offering_thanksgiving }}</td></tr>
-      <tr><th>Recettes supplementaires</th><td>{{ report.extra_income }}</td><th>Depenses</th><td>{{ report.expenses }}</td></tr>
-      <tr><th>Total offrandes</th><td>{{ report.total_offerings }}</td><th>Dime + social</th><td>{{ report.tithe_deduction|add:report.social_deduction }}</td></tr>
-      <tr><th>Solde net</th><td colspan="3">{{ report.net_balance }}</td></tr>
-    </tbody>
-  </table>
+    <!-- INFORMATIONS DU CULTE -->
+    <div class="section-title">Informations du Culte</div>
+    <div class="info-grid">
+      <div class="info-cell">
+        <span class="lbl">Heure :</span>
+        <span class="val">
+          {% if report.service_time_start %}{{ report.service_time_start|time:"H:i" }}{% endif %}
+          {% if report.service_time_start and report.service_time_end %} – {% endif %}
+          {% if report.service_time_end %}{{ report.service_time_end|time:"H:i" }}{% endif %}
+          {% if not report.service_time_start %}—{% endif %}
+        </span>
+      </div>
+      <div class="info-cell">
+        <span class="lbl">Modérateur :</span>
+        <span class="val">{{ report.moderator|default:"—" }}</span>
+      </div>
+      <div class="info-cell">
+        <span class="lbl">Prédicateur :</span>
+        <span class="val">{{ report.preacher|default:"—" }}</span>
+      </div>
+      <div class="info-cell">
+        <span class="lbl">Interprète :</span>
+        <span class="val">{{ report.interpreter|default:"—" }}</span>
+      </div>
+      <div class="info-cell">
+        <span class="lbl">Thème :</span>
+        <span class="val">{{ report.theme|default:"—" }}</span>
+      </div>
+      <div class="info-cell">
+        <span class="lbl">Textes :</span>
+        <span class="val">{{ report.scripture_text|default:"—" }}</span>
+      </div>
+    </div>
 
-  {% if report.notes %}
-    <h2>Notes</h2>
-    <p>{{ report.notes|linebreaksbr }}</p>
-  {% endif %}
+    <!-- EFFECTIF DES PRÉSENTS -->
+    <div class="section-title">Effectif des Présents</div>
+    <table class="tbl-effectif">
+      <thead>
+        <tr>
+          <th>Papas</th>
+          <th>Mamans</th>
+          <th>Frères</th>
+          <th>Sœurs</th>
+          <th>Enfants</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ report.papa_count }}</td>
+          <td>{{ report.maman_count }}</td>
+          <td>{{ report.brothers_count }}</td>
+          <td>{{ report.sisters_count }}</td>
+          <td>{{ report.children_count }}</td>
+          <td class="total">{{ report.total_attendance }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- RÉPARTITION DES RECETTES ET PRÉLÈVEMENTS -->
+    <div class="section-title">Répartition des Recettes et Prélèvements</div>
+    {% with sym=currency_symbol %}
+    {% with v=ventilation %}
+    <table class="tbl-recettes">
+      <thead>
+        <tr>
+          <th style="text-align:left;width:34%">Type de recette</th>
+          <th>Montant ({{ sym }})</th>
+          <th>Dîme {{ report.tithe_percentage_snapshot|floatformat:0 }}%</th>
+          <th>Social ({{ report.social_percentage_snapshot|floatformat:0 }}%)</th>
+          <th>Reste</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Offrandes ordinaires</td>
+          <td>{{ sym }} {{ report.offering_regular|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.ordinaires.dime|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.ordinaires.social|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.ordinaires.reste|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <td>Offrandes pour Orateur</td>
+          <td>{{ sym }} {{ report.offering_preacher|floatformat:2 }}</td>
+          <td>{{ sym }} 0,00</td>
+          <td>{{ sym }} 0,00</td>
+          <td>{{ sym }} {{ v.orateur.reste|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <td>Dîmes</td>
+          <td>{{ sym }} {{ report.offering_tithe|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.dimes.dime|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.dimes.social|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.dimes.reste|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <td>Actions de Grâce</td>
+          <td>{{ sym }} {{ report.offering_thanksgiving|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.actions_grace.dime|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.actions_grace.social|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.actions_grace.reste|floatformat:2 }}</td>
+        </tr>
+
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td>{{ sym }} {{ report.total_offerings|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.total_dime|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.total_social|floatformat:2 }}</td>
+          <td>{{ sym }} {{ v.offering_remainder|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% endwith %}
+    {% endwith %}
+
+    <!-- DÉPENSES -->
+    <div class="section-title">Dépenses</div>
+    {% with sym=currency_symbol %}
+    <table class="tbl-depenses">
+      <thead>
+        <tr>
+          <th style="width:40px">N°</th>
+          <th style="width:140px;text-align:right">Montant ({{ sym }})</th>
+          <th style="text-align:left">Motif</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dep in expense_items %}
+        <tr>
+          <td>{{ dep.number }}</td>
+          <td>{{ sym }} {{ dep.amount|floatformat:2 }}</td>
+          <td>{{ dep.reason }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" style="text-align:center;color:#999;font-style:italic;">Aucune dépense enregistrée</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="text-align:left;font-weight:700">Total</td>
+          <td style="text-align:right">{{ sym }} {{ report.total_expenses|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% endwith %}
+
+    <!-- RESTE FINAL -->
+    <div class="reste-final-wrap">
+      <div>
+        <div class="section-title" style="margin:0 0 8px 0;display:inline-block;padding:4px 12px;">Reste Final</div>
+        <div class="reste-box">
+          <div class="lbl-reste">Solde disponible</div>
+          <div class="val-reste {% if report.net_balance < 0 %}negative{% endif %}">
+            {{ currency_symbol }} {{ report.net_balance|floatformat:2 }}
+          </div>
+        </div>
+      </div>
+      {% if show_usd %}
+      <div class="reste-usd">
+        Équivalent USD : <span>$ {{ usd_balance|floatformat:2 }}</span><br>
+        <small>(1 {{ currency_code }} = {{ exchange_rate_to_usd }} USD)</small>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- NOUVEAUX VENUS -->
+    {% if newcomers %}
+    <div class="section-title" style="margin-top:12px">Nouveaux Venus</div>
+    <table class="tbl-depenses">
+      <thead>
+        <tr>
+          <th style="text-align:left">Nom</th>
+          <th style="text-align:left">Invité par</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for nc in newcomers %}
+        <tr>
+          <td>{{ nc.full_name }}</td>
+          <td>{{ nc.invited_by|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- AMES GAGNEES -->
+    {% if new_converts %}
+    <div class="section-title" style="margin-top:12px">Âmes Gagnées</div>
+    <table class="tbl-depenses">
+      <thead>
+        <tr>
+          <th style="text-align:left">Nom</th>
+          <th style="text-align:left">Téléphone</th>
+          <th style="text-align:left">Adresse</th>
+          <th style="text-align:left">Suivi par</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cv in new_converts %}
+        <tr>
+          <td>{{ cv.full_name }}</td>
+          <td>{{ cv.phone|default:"-" }}</td>
+          <td>{{ cv.address|default:"-" }}</td>
+          <td>{{ cv.follow_up_owner|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="sig-box">
+        <div class="sig-role">Secrétaire</div>
+        <div class="sig-name">{{ report.extension.secretary|default:"____________________" }}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-role">Trésorier</div>
+        <div class="sig-name">{{ report.extension.treasurer|default:"____________________" }}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-role">Pasteur</div>
+        <div class="sig-name">{{ report.extension.pastor_name|default:"____________________" }}</div>
+      </div>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="doc-footer">
+      Rapport généré le {{ report.updated_at|date:"j F Y à H:i" }} — Emerge In Christ Manager
+    </div>
+
+  </div>
+
 </body>
 </html>

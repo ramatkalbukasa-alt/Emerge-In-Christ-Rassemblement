@@ -1,46 +1,97 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Rapports - Ecclessia Manager{% endblock %}
 {% block content %}
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+<!-- ───── Page Header ───── -->
+<div class="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <p class="deco-kicker">III. Registre</p>
-    <h1 class="deco-heading mt-2">Rapports</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">Historique des cultes, presences, offrandes et soldes.</p>
+    <div class="deco-kicker">
+      <span class="relative flex h-2 w-2">
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-bright"></span>
+      </span>
+      <span>Registre</span>
+    </div>
+    <h1 class="mt-3 deco-heading">Rapports</h1>
+    <p class="mt-2 text-sm text-fg-muted">Historique général des cultes, présences, offrandes et soldes disponibles.</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a class="btn-secondary" href="{% url 'reports:export' 'html' %}" target="_blank" rel="noopener">Imprimer</a>
-    <a class="btn-secondary" href="{% url 'reports:export' 'csv' %}">CSV</a>
-    <a class="btn-primary" href="{% url 'reports:create' %}">Nouveau rapport</a>
+    <a class="btn-secondary flex items-center" href="{% url 'reports:export' 'html' %}" target="_blank" rel="noopener">
+      <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+      </svg>
+      Imprimer le registre
+    </a>
+    <a class="btn-secondary flex items-center" href="{% url 'reports:export' 'csv' %}">
+      <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Exporter CSV
+    </a>
+    <a class="btn-primary flex items-center" href="{% url 'reports:create' %}">
+      <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nouveau rapport
+    </a>
   </div>
 </div>
 
+<!-- ───── Table Panel ───── -->
 <section class="deco-panel overflow-hidden">
   <div class="overflow-x-auto">
     <table class="deco-table">
       <thead>
         <tr>
-          <th class="px-4 py-3">Date</th>
-          <th class="px-4 py-3">Extension</th>
-          <th class="px-4 py-3">Type</th>
-          <th class="px-4 py-3">Presence</th>
-          <th class="px-4 py-3">Offrandes</th>
-          <th class="px-4 py-3">Solde</th>
-          <th class="px-4 py-3"></th>
+          <th class="px-6 py-4">Date du culte</th>
+          <th class="px-6 py-4">Extension</th>
+          <th class="px-6 py-4">Type de culte</th>
+          <th class="px-6 py-4">Présence</th>
+          <th class="px-6 py-4">Offrandes brutes</th>
+          <th class="px-6 py-4">Solde disponible</th>
+          <th class="px-6 py-4"></th>
         </tr>
       </thead>
       <tbody>
         {% for report in reports %}
           <tr>
-            <td class="px-4 py-3 font-medium">{{ report.service_date }}</td>
-            <td class="px-4 py-3">{{ report.extension.name }}</td>
-            <td class="px-4 py-3">{{ report.get_service_type_display }}</td>
-            <td class="px-4 py-3">{{ report.total_attendance }}</td>
-            <td class="px-4 py-3">{{ report.total_offerings }}</td>
-            <td class="px-4 py-3 font-semibold">{{ report.net_balance }}</td>
-            <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'reports:detail' report.pk %}">Ouvrir</a></td>
+            <td class="px-6 py-4 font-mono text-xs text-fg-muted">{{ report.service_date }}</td>
+            <td class="px-6 py-4 font-semibold text-fg">{{ report.extension.name }}</td>
+            <td class="px-6 py-4">
+              {% if report.service_type == 'sunday' %}
+                <span class="inline-flex items-center rounded-full bg-accent/10 border border-accent/20 px-2.5 py-0.5 text-xs font-semibold text-accent-bright">
+                  Culte Dominical
+                </span>
+              {% elif report.service_type == 'week' %}
+                <span class="inline-flex items-center rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-semibold text-purple-300">
+                  Culte Semaine
+                </span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full bg-amber-400/10 border border-amber-400/20 px-2.5 py-0.5 text-xs font-semibold text-bronze">
+                  Culte Spécial
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_attendance }}</td>
+            <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_offerings }}</td>
+            <td class="px-6 py-4 font-mono font-semibold {% if report.net_balance >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">
+              {{ report.net_balance }}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <a class="deco-action" href="{% url 'reports:detail' report.pk %}">Ouvrir</a>
+            </td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="7">Aucun rapport enregistre.</td></tr>
+          <tr>
+            <td class="px-6 py-12 text-center text-sm text-fg-muted font-medium" colspan="7">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <svg class="h-10 w-10 text-black/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Aucun rapport enregistré pour le moment.</span>
+              </div>
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>

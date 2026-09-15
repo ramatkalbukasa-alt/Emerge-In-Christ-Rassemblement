@@ -1,14 +1,27 @@
 {% extends "base.html" %}
+{% load static l10n %}
 {% block title %}Rapport {{ report.service_date }} - Ecclessia Manager{% endblock %}
 {% block content %}
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+<!-- ───── Page Header ───── -->
+<div class="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <p class="deco-kicker">V. Detail</p>
-    <h1 class="deco-heading mt-2">{{ report.extension.name }}</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">{{ report.get_service_type_display }} du {{ report.service_date }}</p>
+    <div class="deco-kicker">
+      <span class="relative flex h-2 w-2">
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-bright"></span>
+      </span>
+      <span>Détails du rapport</span>
+    </div>
+    <h1 class="mt-3 deco-heading">{{ report.extension.name }}</h1>
+    <p class="mt-2 text-sm text-fg-muted">{{ report.get_service_type_display }} du {{ report.service_date }}</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a class="btn-secondary" href="{% url 'reports:print' report.pk %}" target="_blank" rel="noopener">Imprimer</a>
+    <a class="btn-primary flex items-center" href="{% url 'reports:print' report.pk %}" target="_blank" rel="noopener">
+      <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+      </svg>
+      Imprimer
+    </a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'pdf' %}">PDF</a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'docx' %}">DOCX</a>
     <a class="btn-secondary" href="{% url 'reports:export_detail' report.pk 'csv' %}">CSV</a>
@@ -16,53 +29,355 @@
   </div>
 </div>
 
-<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Presence</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_attendance }}</p>
+<!-- ───── KPI Cards ───── -->
+<section class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+  <!-- Présence -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Présence</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ report.total_attendance }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-accent/10 group-hover:text-accent-bright transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-accent-bright"></div>
+      <p class="text-[10px] text-fg-muted">Fidèles et visiteurs</p>
+    </div>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Offrandes</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.total_offerings }}</p>
+
+  <!-- Offrandes -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Offrandes collectées</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ report.total_offerings }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-amber-400/10 group-hover:text-bronze transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-amber-400"></div>
+      <p class="text-[10px] text-fg-muted">Brut avant prélèvements</p>
+    </div>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Dime + social</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.tithe_deduction|add:report.social_deduction }}</p>
+
+  <!-- Déductions -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Total déductions</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ total_deductions|floatformat:2 }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-accent/10 group-hover:text-accent-bright transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6M9 21V3M21 9H3M9 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-accent-bright"></div>
+      <p class="text-[10px] text-fg-muted">Dîmes & Fonds social</p>
+    </div>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Solde net</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ report.net_balance }}</p>
+
+  <!-- Solde net -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Solde disponible</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight {% if report.net_balance >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">{{ report.net_balance }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-emerald-400/10 group-hover:text-emerald-700 transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full {% if report.net_balance >= 0 %}bg-emerald-400{% else %}bg-red-400{% endif %}"></div>
+      <p class="text-[10px] text-fg-muted">Restant en caisse locale</p>
+    </div>
   </div>
+
 </section>
 
-<div class="mt-6 grid gap-6 xl:grid-cols-2">
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Effectif</h2>
-    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-ecclesia-muted">Hommes</dt><dd class="font-semibold">{{ report.men_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Femmes</dt><dd class="font-semibold">{{ report.women_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Enfants</dt><dd class="font-semibold">{{ report.children_count }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Visiteurs</dt><dd class="font-semibold">{{ report.visitors_count }}</dd></div>
-    </dl>
-  </section>
+<!-- ───── Breakdown & Charts Row ───── -->
+<div class="mt-8 grid gap-6 xl:grid-cols-2">
 
-  <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Finances</h2>
-    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-ecclesia-muted">Ordinaires</dt><dd class="font-semibold">{{ report.offering_regular }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Orateur</dt><dd class="font-semibold">{{ report.offering_preacher }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Dimes</dt><dd class="font-semibold">{{ report.offering_tithe }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Actions de grace</dt><dd class="font-semibold">{{ report.offering_thanksgiving }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Depenses</dt><dd class="font-semibold">{{ report.expenses }}</dd></div>
-      <div><dt class="text-ecclesia-muted">Recettes supplementaires</dt><dd class="font-semibold">{{ report.extra_income }}</dd></div>
-    </dl>
-  </section>
+  <!-- Left Side: Effectif breakdown + Donut -->
+  <div class="deco-card p-6 flex flex-col justify-between">
+    <div>
+      <div class="border-b border-black/[0.06] pb-4 mb-5 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Statistiques démographiques</p>
+          <h2 class="mt-1 font-display text-lg text-fg">Effectif de l'assemblée</h2>
+        </div>
+        <span class="inline-block h-2 w-2 rounded-full bg-accent-bright"></span>
+      </div>
+
+      <div class="grid gap-6 sm:grid-cols-2 items-center">
+        <!-- Text details -->
+        <div class="space-y-3">
+          <div class="rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.05]">
+            <p class="text-xs uppercase tracking-wider text-fg-muted mb-1">Papa</p>
+            <span class="font-mono text-sm font-semibold text-fg">{{ report.papa_count }}</span>
+          </div>
+          <div class="rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.05]">
+            <p class="text-xs uppercase tracking-wider text-fg-muted mb-1">Maman</p>
+            <span class="font-mono text-sm font-semibold text-fg">{{ report.maman_count }}</span>
+          </div>
+          <div class="rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.05]">
+            <p class="text-xs uppercase tracking-wider text-fg-muted mb-1">Frères</p>
+            <span class="font-mono text-sm font-semibold text-fg">{{ report.brothers_count }}</span>
+          </div>
+          <div class="rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.05]">
+            <p class="text-xs uppercase tracking-wider text-fg-muted mb-1">Sœurs</p>
+            <span class="font-mono text-sm font-semibold text-fg">{{ report.sisters_count }}</span>
+          </div>
+          <div class="rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.05]">
+            <p class="text-xs uppercase tracking-wider text-fg-muted mb-1">Enfants</p>
+            <span class="font-mono text-sm font-semibold text-fg">{{ report.children_count }}</span>
+          </div>
+        </div>
+
+        <!-- Doughnut Chart -->
+        <div class="relative h-44 flex items-center justify-center">
+          <canvas id="chartAttendanceDetail"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Financial Breakdown + Bar Chart -->
+  <div class="deco-card p-6 flex flex-col justify-between">
+    <div>
+      <div class="border-b border-black/[0.06] pb-4 mb-5 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-fg-muted">Détails de caisse</p>
+          <h2 class="mt-1 font-display text-lg text-fg">Structure des flux financiers</h2>
+        </div>
+        <span class="inline-block h-2 w-2 rounded-full bg-amber-400"></span>
+      </div>
+
+      <div class="grid gap-6 sm:grid-cols-2 items-center">
+        <!-- Text details -->
+        <div class="grid grid-cols-1 gap-2 text-xs">
+          <div class="flex justify-between border-b border-black/[0.06] pb-1.5">
+            <span class="text-fg-muted">Offrandes ordinaires</span>
+            <span class="font-mono font-semibold text-fg">{{ report.offering_regular }}</span>
+          </div>
+          <div class="flex justify-between border-b border-black/[0.06] pb-1.5">
+            <span class="text-fg-muted">Offrandes orateur</span>
+            <span class="font-mono font-semibold text-fg">{{ report.offering_preacher }}</span>
+          </div>
+          <div class="flex justify-between border-b border-black/[0.06] pb-1.5">
+            <span class="text-fg-muted">Dîmes locales</span>
+            <span class="font-mono font-semibold text-fg">{{ report.offering_tithe }}</span>
+          </div>
+          <div class="flex justify-between border-b border-black/[0.06] pb-1.5">
+            <span class="text-fg-muted">Actions de grâce</span>
+            <span class="font-mono font-semibold text-fg">{{ report.offering_thanksgiving }}</span>
+          </div>
+          <div class="flex justify-between pb-1.5">
+            <span class="text-red-700 font-medium">Dépenses du culte</span>
+            <span class="font-mono font-semibold text-red-700">-{{ report.total_expenses }}</span>
+          </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="relative h-44">
+          <canvas id="chartFinanceDetail"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-{% if report.notes %}
-  <section class="deco-card mt-6 p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Notes</h2>
-    <p class="mt-3 whitespace-pre-line text-sm text-ecclesia-muted">{{ report.notes }}</p>
-  </section>
+<!-- ───── Infos Culte ───── -->
+{% if report.scripture_text or report.moderator or report.interpreter %}
+<section class="deco-card mt-6 p-6">
+  <div class="border-b border-black/[0.06] pb-4 mb-4">
+    <h2 class="font-display text-lg text-fg">Informations du culte</h2>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 text-sm">
+    {% if report.scripture_text %}
+    <div><span class="text-fg-muted">Textes bibliques :</span> <span class="font-medium text-fg">{{ report.scripture_text }}</span></div>
+    {% endif %}
+    {% if report.moderator %}
+    <div><span class="text-fg-muted">Modérateur :</span> <span class="font-medium text-fg">{{ report.moderator }}</span></div>
+    {% endif %}
+    {% if report.interpreter %}
+    <div><span class="text-fg-muted">Interprète :</span> <span class="font-medium text-fg">{{ report.interpreter }}</span></div>
+    {% endif %}
+  </div>
+</section>
 {% endif %}
+
+<!-- ───── Dépenses du culte ───── -->
+{% if expense_items %}
+<section class="deco-card mt-6 p-6">
+  <div class="border-b border-black/[0.06] pb-4 mb-4">
+    <h2 class="font-display text-lg text-fg">Dépenses du culte</h2>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="border-b border-black/[0.08] text-fg-muted">
+      <tr>
+        <th class="py-2 text-left">N°</th>
+        <th class="py-2 text-left">Motif</th>
+        <th class="py-2 text-right">Montant</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-black/[0.05]">
+      {% for item in expense_items %}
+      <tr>
+        <td class="py-2 text-fg-muted">{{ item.number }}</td>
+        <td class="py-2 text-fg-muted">{{ item.reason }}</td>
+        <td class="py-2 text-right font-mono font-semibold text-red-700">{{ item.amount }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<!-- ───── Nouveaux Venus ───── -->
+{% if newcomers %}
+<section class="deco-card mt-6 p-6">
+  <div class="border-b border-black/[0.06] pb-4 mb-4">
+    <h2 class="font-display text-lg text-fg">Nouveaux Venus</h2>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="border-b border-black/[0.08] text-fg-muted">
+      <tr>
+        <th class="py-2 text-left">Nom</th>
+        <th class="py-2 text-left">Invité par</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-black/[0.05]">
+      {% for nc in newcomers %}
+      <tr>
+        <td class="py-2 font-medium text-fg">{{ nc.full_name }}</td>
+        <td class="py-2 text-fg-muted">{{ nc.invited_by|default:"-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<!-- ───── Âmes Gagnées ───── -->
+{% if new_converts %}
+<section class="deco-card mt-6 p-6">
+  <div class="border-b border-black/[0.06] pb-4 mb-4">
+    <h2 class="font-display text-lg text-fg">Âmes Gagnées</h2>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="border-b border-black/[0.08] text-fg-muted">
+      <tr>
+        <th class="py-2 text-left">Nom</th>
+        <th class="py-2 text-left">Téléphone</th>
+        <th class="py-2 text-left">Adresse</th>
+        <th class="py-2 text-left">Suivi</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-black/[0.05]">
+      {% for cv in new_converts %}
+      <tr>
+        <td class="py-2 font-medium text-fg">{{ cv.full_name }}</td>
+        <td class="py-2 text-fg-muted">{{ cv.phone|default:"-" }}</td>
+        <td class="py-2 text-fg-muted">{{ cv.address|default:"-" }}</td>
+        <td class="py-2 text-fg-muted">{{ cv.follow_up_owner|default:"-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<!-- ───── Chart.js Script ───── -->
+{% localize off %}
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  const RED   = '#C90800';
+  const GOLD  = '#FFD84D';
+  const NAVY  = '#9A642E';
+  const SLATE = '#0A0A0A';
+
+  // ── 1. Attendance Doughnut ──
+  const attendanceData = [
+    {{ report.papa_count|default:0 }},
+    {{ report.maman_count|default:0 }},
+    {{ report.brothers_count|default:0 }},
+    {{ report.sisters_count|default:0 }},
+    {{ report.children_count|default:0 }}
+  ];
+
+  if (attendanceData.some(v => v > 0)) {
+    new Chart(document.getElementById('chartAttendanceDetail'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Papa', 'Maman', 'Frères', 'Sœurs', 'Enfants'],
+        datasets: [{
+          data: attendanceData,
+          backgroundColor: [RED, GOLD, '#0A0A0A', '#DDD6CE', NAVY],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  // ── 2. Finance Horizontal Bar ──
+  const financeLabels = ['Reg', 'Orat', 'Dîmes', 'Grace', 'Dép'];
+  const financeValues = [
+    {{ report.offering_regular|default:0 }},
+    {{ report.offering_preacher|default:0 }},
+    {{ report.offering_tithe|default:0 }},
+    {{ report.offering_thanksgiving|default:0 }},
+    {{ report.total_expenses|default:0 }}
+  ];
+
+  new Chart(document.getElementById('chartFinanceDetail'), {
+    type: 'bar',
+    data: {
+      labels: financeLabels,
+      datasets: [{
+        data: financeValues,
+        backgroundColor: [GOLD, GOLD + 'BB', GOLD + '88', GOLD + '55', RED],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#625D58' } },
+        y: { grid: { color: 'rgba(10,10,10,0.08)' }, ticks: { font: { size: 10 }, color: '#625D58' } }
+      }
+    }
+  });
+})();
+</script>
+{% endlocalize %}
 {% endblock %}

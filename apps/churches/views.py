@@ -26,7 +26,7 @@ def extension_list(request):
 
 @admin_required
 def extension_create(request):
-    form = ChurchExtensionForm(request.POST or None)
+    form = ChurchExtensionForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         form.save()
         return redirect("churches:list")
@@ -36,8 +36,8 @@ def extension_create(request):
 @admin_required
 def extension_update(request, slug):
     extension = get_object_or_404(ChurchExtension, slug=slug)
-    form = ChurchExtensionForm(request.POST or None, instance=extension)
+    form = ChurchExtensionForm(request.POST or None, request.FILES or None, instance=extension)
     if form.is_valid():
         form.save()
         return redirect("churches:list")
-    return render(request, "churches/extension_form.html", {"form": form, "title": "Modifier extension"})
+    return render(request, "churches/extension_form.html", {"form": form, "title": "Modifier l'extension"})

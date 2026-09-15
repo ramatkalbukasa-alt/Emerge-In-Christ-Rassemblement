@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "apps.churches",
     "apps.reports",
     "apps.dashboard",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -54,6 +55,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.notifications.context_processors.notifications_context",
             ],
         },
     },
@@ -104,8 +106,25 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
+# Fichiers média (logos, images)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / os.environ.get("MEDIA_ROOT", "media")
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard:home"
 LOGOUT_REDIRECT_URL = "login"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ── Email SMTP ──────────────────────────────────────────────────────────────
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "Emerge In Christ <no-reply@emergeinchrist.org>"
+)

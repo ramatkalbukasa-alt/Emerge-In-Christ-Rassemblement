@@ -1,0 +1,16 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}{{ title }} | Emerge In Christ{% endblock %}
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}" class="admin-brand"><img src="{% static 'branding/emerge-symbol.png' %}" width="40" height="48" alt="Emerge In Christ"> <span>Emerge In Christ <small>Administration</small></span></a></div>
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link rel="icon" href="{% static 'branding/emerge-symbol.png' %}">
+<style>
+:root, html[data-theme="light"], html[data-theme="dark"] { --primary:#C90800; --secondary:#0A0A0A; --accent:#FFD84D; --header-bg:#0A0A0A; --header-color:#FFFFFF; --header-branding-color:#FFD84D; --breadcrumbs-bg:#9A642E; --link-fg:#A30700; --link-selected-fg:#9A642E; --button-bg:#C90800; --button-hover-bg:#A30700; --default-button-bg:#C90800; --default-button-hover-bg:#A30700; }
+.admin-brand { display:flex; gap:12px; align-items:center; }
+.admin-brand img { object-fit:contain; }
+.admin-brand small { display:block; margin-top:4px; color:#FFFFFF; font-size:12px; }
+html[data-theme="dark"] { --link-fg:#FFD84D; --link-selected-fg:#FFFFFF; }
+</style>
+{% endblock %}

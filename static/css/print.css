@@ -1,0 +1,27 @@
+/* Shared report presentation, loaded after each report's page-specific styles. */
+* { box-sizing: border-box; }
+.doc-header .logo-wrap .brand-symbol, .document-header .brand-symbol { width: 58px; height: 70px; object-fit: contain; flex-shrink: 0; }
+.no-print-bar { flex-wrap: wrap; gap: 12px; }
+.no-print-bar svg { width: 18px; height: 18px; flex-shrink: 0; }
+.no-print-bar a, .no-print-bar button, .no-print-bar select { min-height: 44px; }
+.no-print-bar select { max-width: 100%; }
+:focus-visible { outline: 3px solid #9a6700; outline-offset: 3px; }
+th, td { overflow-wrap: anywhere; }
+thead { display: table-header-group; }
+@media screen {
+  .a4-page, .a4-page-landscape { max-width: 100%; }
+  @media (max-width: 640px) {
+    body { padding: 12px 8px; }
+    .a4-page, .a4-page-landscape { padding: 16px; min-height: auto; overflow-x: auto; }
+    .a4-page table, .a4-page-landscape table { min-width: 600px; }
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .document-header { flex-wrap: wrap; gap: 12px; }
+    .no-print-bar > div { flex-wrap: wrap; max-width: 100%; }
+  }
+}
+@media print {
+  .no-print { display: none !important; }
+  tr, .doc-header, .document-header, .signatures, .sig-box { break-inside: avoid; }
+  .section-title { break-after: avoid; }
+  .a4-page, .a4-page-landscape { overflow: visible; }
+}

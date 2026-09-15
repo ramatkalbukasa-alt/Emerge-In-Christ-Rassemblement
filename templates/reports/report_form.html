@@ -1,72 +1,537 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Nouveau rapport - Ecclessia Manager{% endblock %}
 {% block content %}
 <div class="mb-6">
   <p class="deco-kicker">IV. Saisie</p>
   <h1 class="deco-heading mt-2">Nouveau rapport</h1>
-  <p class="mt-1 text-sm text-ecclesia-muted">Saisie du culte, des presences, des offrandes et des depenses.</p>
+  <p class="mt-1 text-sm text-fg-muted">Saisie du culte, des présences, des finances et des nouveaux venus.</p>
 </div>
 
-<form method="post" class="space-y-5" x-data>
+<form method="post" class="space-y-5">
   {% csrf_token %}
   {% if form.non_field_errors %}
-    <div class="border border-red-400/70 bg-red-950/40 px-4 py-3 text-sm text-red-100">{{ form.non_field_errors }}</div>
+    <div class="border border-red-400/70 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
   {% endif %}
 
+  <!-- CULTE -->
   <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Culte</h2>
-    <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">1. Culte & Liturgie</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Général</span>
+    </div>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {% for field in form %}
-        {% if field.name == "extension" or field.name == "service_type" or field.name == "service_date" or field.name == "preacher" or field.name == "theme" %}
-          <div {% if field.name == "theme" %}class="xl:col-span-2"{% endif %}>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.name in "extension,service_type,service_date,currency,service_time_start,service_time_end,preacher,moderator,interpreter,scripture_text,theme" %}
+          <div {% if field.name == "theme" or field.name == "scripture_text" %}class="xl:col-span-3"{% endif %}>
+            <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+            {% for error in field.errors %}<p class="mt-1 text-xs text-red-700">{{ error }}</p>{% endfor %}
           </div>
         {% endif %}
       {% endfor %}
     </div>
   </section>
 
+  <!-- EFFECTIF -->
   <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Effectif</h2>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">2. Effectif de l'assemblée</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Présences</span>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {% for field in form %}
-        {% if field.name == "men_count" or field.name == "women_count" or field.name == "children_count" or field.name == "visitors_count" %}
+        {% if field.name in "papa_count,maman_count,brothers_count,sisters_count,children_count" %}
           <div>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+            {% for error in field.errors %}<p class="mt-1 text-xs text-red-700">{{ error }}</p>{% endfor %}
           </div>
         {% endif %}
       {% endfor %}
     </div>
   </section>
 
+  <!-- FINANCES -->
   <section class="deco-card p-6">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Finances</h2>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">3. Finances (Offrandes & Dîmes)</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Recettes</span>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {% for field in form %}
-        {% if field.name == "offering_regular" or field.name == "offering_preacher" or field.name == "offering_tithe" or field.name == "offering_thanksgiving" or field.name == "extra_income" or field.name == "expenses" %}
+        {% if field.name in "offering_regular,offering_preacher,offering_tithe,offering_thanksgiving" %}
           <div>
-            <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+            {% for error in field.errors %}<p class="mt-1 text-xs text-red-700">{{ error }}</p>{% endfor %}
           </div>
         {% endif %}
       {% endfor %}
     </div>
+
+    <!-- ── Panneau de prévisualisation financière ── -->
+    <div id="finance-preview" class="mt-6 rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 text-sm hidden">
+      <div class="flex items-center justify-between mb-3">
+        <p class="font-mono text-[10px] uppercase tracking-wider text-fg-muted">
+          Prévisualisation en temps réel — <span id="preview-rates" class="text-accent-bright font-semibold"></span>
+        </p>
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-[10px] text-accent-bright font-mono">
+          <span class="h-1.5 w-1.5 rounded-full bg-accent-bright animate-pulse"></span>
+          Calcul dynamique
+        </span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-black/[0.08] text-fg-muted">
+              <th class="py-2 text-left font-semibold uppercase tracking-wider text-[10px]">Recette</th>
+              <th class="py-2 text-right font-semibold uppercase tracking-wider text-[10px]">Montant</th>
+              <th class="py-2 text-right font-semibold uppercase tracking-wider text-[10px]">Dîme</th>
+              <th class="py-2 text-right font-semibold uppercase tracking-wider text-[10px]">Social</th>
+              <th class="py-2 text-right font-semibold uppercase tracking-wider text-[10px] text-emerald-700">Reste</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/[0.05] font-mono">
+            <tr>
+              <td class="py-2 text-fg-muted">Offrandes ordinaires</td>
+              <td class="py-2 text-right text-fg font-semibold" id="pv-ord-montant">—</td>
+              <td class="py-2 text-right text-red-700" id="pv-ord-dime">—</td>
+              <td class="py-2 text-right text-bronze" id="pv-ord-social">—</td>
+              <td class="py-2 text-right text-emerald-700 font-semibold" id="pv-ord-reste">—</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-fg-muted">Offrandes orateur</td>
+              <td class="py-2 text-right text-fg font-semibold" id="pv-ora-montant">—</td>
+              <td class="py-2 text-right text-black/20" id="pv-ora-dime">0.00</td>
+              <td class="py-2 text-right text-black/20" id="pv-ora-social">0.00</td>
+              <td class="py-2 text-right text-emerald-700 font-semibold" id="pv-ora-reste">—</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-fg-muted">Dîmes</td>
+              <td class="py-2 text-right text-fg font-semibold" id="pv-dim-montant">—</td>
+              <td class="py-2 text-right text-red-700" id="pv-dim-dime">—</td>
+              <td class="py-2 text-right text-bronze" id="pv-dim-social">—</td>
+              <td class="py-2 text-right text-emerald-700 font-semibold" id="pv-dim-reste">—</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-fg-muted">Actions de grâce</td>
+              <td class="py-2 text-right text-fg font-semibold" id="pv-agr-montant">—</td>
+              <td class="py-2 text-right text-red-700" id="pv-agr-dime">—</td>
+              <td class="py-2 text-right text-bronze" id="pv-agr-social">—</td>
+              <td class="py-2 text-right text-emerald-700 font-semibold" id="pv-agr-reste">—</td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-black/[0.1] font-semibold">
+            <tr>
+              <td class="pt-2.5 text-fg">Totaux consolidés</td>
+              <td class="pt-2.5 text-right text-fg font-bold" id="pv-tot-recettes">—</td>
+              <td class="pt-2.5 text-right text-red-700" id="pv-tot-dime">—</td>
+              <td class="pt-2.5 text-right text-bronze" id="pv-tot-social">—</td>
+              <td class="pt-2.5 text-right text-emerald-700 font-bold" id="pv-tot-reste">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-4 border-t border-black/[0.08] pt-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-fg-muted">Total dépenses culte :</span>
+          <span class="font-mono font-semibold text-red-700" id="pv-depenses">0.00</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-fg-muted font-medium">Reste net en caisse :</span>
+          <span class="font-mono font-bold text-lg" id="pv-reste-final">—</span>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="deco-card p-6">
-    <label class="mb-1 block" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
-    {{ form.notes }}
-    {% for error in form.notes.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+  <!-- DÉPENSES DU CULTE -->
+  <section class="deco-card p-6" x-data="formsetManager('{{ expense_formset.prefix }}')">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">4. Dépenses du culte</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Charges locales</span>
+    </div>
+    {{ expense_formset.management_form }}
+    {{ expense_formset.non_form_errors }}
+    <div id="{{ expense_formset.prefix }}-container" class="space-y-3">
+      {% for f in expense_formset %}
+        {{ f.non_field_errors }}
+        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+          <div class="w-full sm:w-48">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <label class="mb-1 block text-xs" for="{{ f.amount.id_for_label }}">Montant</label>
+            {{ f.amount }}
+            {{ f.amount.errors }}
+          </div>
+          <div class="flex-1 w-full">
+            <label class="mb-1 block text-xs" for="{{ f.reason.id_for_label }}">Motif</label>
+            {{ f.reason }}
+            {{ f.reason.errors }}
+          </div>
+          <div class="pt-0 sm:pt-6 shrink-0">
+            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+              {{ f.DELETE }}
+              <span>Suppr.</span>
+            </label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <template id="{{ expense_formset.prefix }}-empty">
+      <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+        <div class="w-full sm:w-48">
+          {% for hidden in expense_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+          <label class="mb-1 block text-xs" for="{{ expense_formset.empty_form.amount.id_for_label }}">Montant</label>
+            {{ expense_formset.empty_form.amount }}
+            {{ expense_formset.empty_form.amount.errors }}
+        </div>
+        <div class="flex-1 w-full">
+          <label class="mb-1 block text-xs" for="{{ expense_formset.empty_form.reason.id_for_label }}">Motif</label>
+            {{ expense_formset.empty_form.reason }}
+            {{ expense_formset.empty_form.reason.errors }}
+        </div>
+        <div class="pt-0 sm:pt-6 shrink-0">
+          <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+            {{ expense_formset.empty_form.DELETE }}
+            <span>Suppr.</span>
+          </label>
+        </div>
+      </div>
+    </template>
+    <button type="button"
+            class="mt-4 inline-flex items-center gap-2 rounded-xl border border-black/10 bg-black/[0.04] px-4 py-2.5 text-xs font-semibold text-fg hover:bg-black/[0.08] hover:border-black/20 transition-all duration-200"
+            @click="addForm()">
+      <svg class="h-4 w-4 text-accent-bright" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Ajouter une dépense
+    </button>
   </section>
 
-  <div class="flex gap-3">
+  <!-- NOUVEAUX VENUS -->
+  <section class="deco-card p-6" x-data="formsetManager('{{ newcomer_formset.prefix }}')">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">5. Nouveaux Venus</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Visiteurs</span>
+    </div>
+    {{ newcomer_formset.management_form }}
+    {{ newcomer_formset.non_form_errors }}
+    <div id="{{ newcomer_formset.prefix }}-container" class="space-y-3">
+      {% for f in newcomer_formset %}
+        {{ f.non_field_errors }}
+        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+          <div class="flex-1 w-full">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <label class="mb-1 block text-xs" for="{{ f.full_name.id_for_label }}">Nom complet</label>
+            {{ f.full_name }}
+            {{ f.full_name.errors }}
+          </div>
+          <div class="flex-1 w-full">
+            <label class="mb-1 block text-xs" for="{{ f.invited_by.id_for_label }}">Invité par</label>
+            {{ f.invited_by }}
+            {{ f.invited_by.errors }}
+          </div>
+          <div class="pt-0 sm:pt-6 shrink-0">
+            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+              {{ f.DELETE }}
+              <span>Suppr.</span>
+            </label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <template id="{{ newcomer_formset.prefix }}-empty">
+      <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+        <div class="flex-1 w-full">
+          {% for hidden in newcomer_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+          <label class="mb-1 block text-xs" for="{{ newcomer_formset.empty_form.full_name.id_for_label }}">Nom complet</label>
+            {{ newcomer_formset.empty_form.full_name }}
+            {{ newcomer_formset.empty_form.full_name.errors }}
+        </div>
+        <div class="flex-1 w-full">
+          <label class="mb-1 block text-xs" for="{{ newcomer_formset.empty_form.invited_by.id_for_label }}">Invité par</label>
+            {{ newcomer_formset.empty_form.invited_by }}
+            {{ newcomer_formset.empty_form.invited_by.errors }}
+        </div>
+        <div class="pt-0 sm:pt-6 shrink-0">
+          <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+            {{ newcomer_formset.empty_form.DELETE }}
+            <span>Suppr.</span>
+          </label>
+        </div>
+      </div>
+    </template>
+    <button type="button"
+            class="mt-4 inline-flex items-center gap-2 rounded-xl border border-black/10 bg-black/[0.04] px-4 py-2.5 text-xs font-semibold text-fg hover:bg-black/[0.08] hover:border-black/20 transition-all duration-200"
+            @click="addForm()">
+      <svg class="h-4 w-4 text-accent-bright" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Ajouter un nouveau venu
+    </button>
+  </section>
+
+  <!-- AMES GAGNEES -->
+  <section class="deco-card p-6" x-data="formsetManager('{{ new_convert_formset.prefix }}')">
+    <div class="flex items-center justify-between border-b border-black/[0.06] pb-3 mb-5">
+      <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright">6. Âmes Gagnées & Conversions</h2>
+      <span class="font-mono text-[10px] text-fg-muted uppercase tracking-wider">Évangélisation</span>
+    </div>
+    {{ new_convert_formset.management_form }}
+    {{ new_convert_formset.non_form_errors }}
+    <div id="{{ new_convert_formset.prefix }}-container" class="space-y-3">
+      {% for f in new_convert_formset %}
+        {{ f.non_field_errors }}
+        <div class="flex flex-wrap md:flex-nowrap gap-3 items-start md:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+          <div class="flex-1 min-w-[160px]">
+            {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+            <label class="mb-1 block text-xs" for="{{ f.full_name.id_for_label }}">Nom complet</label>
+            {{ f.full_name }}
+            {{ f.full_name.errors }}
+          </div>
+          <div class="flex-1 min-w-[130px]">
+            <label class="mb-1 block text-xs" for="{{ f.phone.id_for_label }}">Téléphone</label>
+            {{ f.phone }}
+            {{ f.phone.errors }}
+          </div>
+          <div class="flex-1 min-w-[160px]">
+            <label class="mb-1 block text-xs" for="{{ f.address.id_for_label }}">Adresse</label>
+            {{ f.address }}
+            {{ f.address.errors }}
+          </div>
+          <div class="flex-1 min-w-[140px]">
+            <label class="mb-1 block text-xs" for="{{ f.follow_up_owner.id_for_label }}">Responsable suivi</label>
+            {{ f.follow_up_owner }}
+            {{ f.follow_up_owner.errors }}
+          </div>
+          <div class="pt-0 md:pt-6 shrink-0">
+            <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+              {{ f.DELETE }}
+              <span>Suppr.</span>
+            </label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <template id="{{ new_convert_formset.prefix }}-empty">
+      <div class="flex flex-wrap md:flex-nowrap gap-3 items-start md:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+        <div class="flex-1 min-w-[160px]">
+          {% for hidden in new_convert_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+          <label class="mb-1 block text-xs" for="{{ new_convert_formset.empty_form.full_name.id_for_label }}">Nom complet</label>
+            {{ new_convert_formset.empty_form.full_name }}
+            {{ new_convert_formset.empty_form.full_name.errors }}
+        </div>
+        <div class="flex-1 min-w-[130px]">
+          <label class="mb-1 block text-xs" for="{{ new_convert_formset.empty_form.phone.id_for_label }}">Téléphone</label>
+            {{ new_convert_formset.empty_form.phone }}
+            {{ new_convert_formset.empty_form.phone.errors }}
+        </div>
+        <div class="flex-1 min-w-[160px]">
+          <label class="mb-1 block text-xs" for="{{ new_convert_formset.empty_form.address.id_for_label }}">Adresse</label>
+            {{ new_convert_formset.empty_form.address }}
+            {{ new_convert_formset.empty_form.address.errors }}
+        </div>
+        <div class="flex-1 min-w-[140px]">
+          <label class="mb-1 block text-xs" for="{{ new_convert_formset.empty_form.follow_up_owner.id_for_label }}">Responsable suivi</label>
+            {{ new_convert_formset.empty_form.follow_up_owner }}
+            {{ new_convert_formset.empty_form.follow_up_owner.errors }}
+        </div>
+        <div class="pt-0 md:pt-6 shrink-0">
+          <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 transition-colors text-xs font-mono">
+            {{ new_convert_formset.empty_form.DELETE }}
+            <span>Suppr.</span>
+          </label>
+        </div>
+      </div>
+    </template>
+    <button type="button"
+            class="mt-4 inline-flex items-center gap-2 rounded-xl border border-black/10 bg-black/[0.04] px-4 py-2.5 text-xs font-semibold text-fg hover:bg-black/[0.08] hover:border-black/20 transition-all duration-200"
+            @click="addForm()">
+      <svg class="h-4 w-4 text-accent-bright" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Ajouter une âme gagnée
+    </button>
+  </section>
+
+  <div class="flex items-center gap-4 pt-4 pb-12">
     <button class="btn-primary" type="submit">Enregistrer le rapport</button>
     <a class="btn-secondary" href="{% url 'reports:list' %}">Annuler</a>
   </div>
 </form>
+
+<script>
+/* ── Formset manager (Alpine) ── */
+document.addEventListener('alpine:init', () => {
+  Alpine.data('formsetManager', (prefix) => ({
+    prefix: prefix,
+    addForm() {
+      const container  = document.getElementById(this.prefix + '-container');
+      const emptyDiv   = document.getElementById(this.prefix + '-empty');
+      const totalForms = document.getElementById('id_' + this.prefix + '-TOTAL_FORMS');
+
+      const formCount    = parseInt(totalForms.value);
+      const newFormHtml  = emptyDiv.innerHTML.replace(/__prefix__/g, formCount);
+      const newFormElement = document.createElement('div');
+      newFormElement.innerHTML = newFormHtml;
+
+      container.appendChild(newFormElement.firstElementChild);
+      totalForms.value = formCount + 1;
+
+      // Déclencher la mise à jour de la prévisualisation après ajout
+      triggerPreview();
+    }
+  }));
+});
+
+/* ── Prévisualisation financière temps réel ── */
+(function () {
+  const PREVIEW_URL = "{% url 'reports:financial_preview' %}";
+  const CSRF_TOKEN  = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+  const $ = id => document.getElementById(id);
+
+  // Champs de recettes
+  const OFFERING_IDS = [
+    'id_offering_regular',
+    'id_offering_preacher',
+    'id_offering_tithe',
+    'id_offering_thanksgiving',
+  ];
+
+  // Sélecteur d'extension
+  const extensionSelect = document.getElementById('id_extension');
+
+  let debounceTimer = null;
+
+  function getExpenses() {
+    // Collecte tous les champs montant des dépenses non supprimées
+    const amounts = [];
+    const container = document.getElementById('expenses-container');
+    if (!container) return amounts;
+
+    container.querySelectorAll('.form-row').forEach(row => {
+      const del = row.querySelector('input[type=checkbox][id*=DELETE]');
+      if (del && del.checked) return;  // ligne supprimée
+      const amt = row.querySelector('input[type=number]');
+      if (amt && amt.value !== '') amounts.push(parseFloat(amt.value) || 0);
+    });
+    return amounts;
+  }
+
+  function triggerPreview() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(fetchPreview, 300);
+  }
+  // Exposer pour le formsetManager Alpine
+  window.triggerPreview = triggerPreview;
+
+  function fetchPreview() {
+    const extId = extensionSelect ? extensionSelect.value : null;
+    const payload = {
+      extension_id:          extId ? parseInt(extId) : null,
+      offering_regular:      parseFloat($('id_offering_regular')?.value)      || 0,
+      offering_preacher:     parseFloat($('id_offering_preacher')?.value)     || 0,
+      offering_tithe:        parseFloat($('id_offering_tithe')?.value)        || 0,
+      offering_thanksgiving: parseFloat($('id_offering_thanksgiving')?.value) || 0,
+      expenses: getExpenses(),
+    };
+
+    fetch(PREVIEW_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken':  CSRF_TOKEN,
+      },
+      body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => updatePreview(data))
+    .catch(() => {});  // Silencieux — ne pas bloquer la saisie
+  }
+
+  function fmt(val) {
+    return parseFloat(val).toFixed(2);
+  }
+
+  function updatePreview(data) {
+    const panel = $('finance-preview');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+
+    // Taux affichés
+    const ratesEl = $('preview-rates');
+    if (ratesEl) ratesEl.textContent = `Dîme ${data.tithe_pct}% · Social ${data.social_pct}%`;
+
+    const r = data.rows;
+    const t = data.totals;
+
+    // Montants bruts
+    const ord = parseFloat($('id_offering_regular')?.value)      || 0;
+    const ora = parseFloat($('id_offering_preacher')?.value)     || 0;
+    const dim = parseFloat($('id_offering_tithe')?.value)        || 0;
+    const agr = parseFloat($('id_offering_thanksgiving')?.value) || 0;
+
+    // Ligne Ordinaires
+    set('pv-ord-montant', fmt(ord));
+    set('pv-ord-dime',    fmt(r.ordinaires.dime));
+    set('pv-ord-social',  fmt(r.ordinaires.social));
+    set('pv-ord-reste',   fmt(r.ordinaires.reste));
+
+    // Ligne Orateur
+    set('pv-ora-montant', fmt(ora));
+    set('pv-ora-reste',   fmt(r.orateur.reste));
+
+    // Ligne Dîmes
+    set('pv-dim-montant', fmt(dim));
+    set('pv-dim-dime',    fmt(r.dimes.dime));
+    set('pv-dim-social',  fmt(r.dimes.social));
+    set('pv-dim-reste',   fmt(r.dimes.reste));
+
+    // Ligne Actions de grâce
+    set('pv-agr-montant', fmt(agr));
+    set('pv-agr-dime',    fmt(r.actions_grace.dime));
+    set('pv-agr-social',  fmt(r.actions_grace.social));
+    set('pv-agr-reste',   fmt(r.actions_grace.reste));
+
+    // Totaux
+    set('pv-tot-recettes', fmt(t.recettes));
+    set('pv-tot-dime',     fmt(t.dime));
+    set('pv-tot-social',   fmt(t.social));
+    set('pv-tot-reste',    fmt(t.reste));
+
+    // Dépenses & reste final
+    set('pv-depenses', fmt(t.depenses));
+    const rf = parseFloat(t.reste_final);
+    const rfEl = $('pv-reste-final');
+    if (rfEl) {
+      rfEl.textContent = fmt(rf);
+      rfEl.className = 'ml-1 font-mono font-bold text-lg ' + (rf >= 0 ? 'text-emerald-700' : 'text-red-700');
+    }
+  }
+
+  function set(id, value) {
+    const el = $(id);
+    if (el) el.textContent = value;
+  }
+
+  // Écouter les champs de recettes
+  OFFERING_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', triggerPreview);
+  });
+
+  // Écouter le changement d'extension (changement de taux)
+  if (extensionSelect) extensionSelect.addEventListener('change', triggerPreview);
+
+  // Écouter les dépenses via délégation sur le container
+  const expensesContainer = document.getElementById('expenses-container');
+  if (expensesContainer) {
+    expensesContainer.addEventListener('input',  triggerPreview);
+    expensesContainer.addEventListener('change', triggerPreview);  // pour les checkboxes DELETE
+  }
+
+  // Calcul initial si des valeurs sont déjà présentes (ex: formulaire avec erreurs)
+  const hasValues = OFFERING_IDS.some(id => {
+    const el = document.getElementById(id);
+    return el && parseFloat(el.value) > 0;
+  });
+  if (hasValues) fetchPreview();
+})();
+</script>
 {% endblock %}

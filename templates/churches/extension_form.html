@@ -1,23 +1,26 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ title }} - Ecclessia Manager{% endblock %}
 {% block content %}
 <div class="mb-6">
   <p class="deco-kicker">Extension</p>
   <h1 class="deco-heading mt-2">{{ title }}</h1>
-  <p class="mt-1 text-sm text-ecclesia-muted">Informations administratives et responsables locaux.</p>
+  <p class="mt-1 text-sm text-fg-muted">Informations administratives et responsables locaux.</p>
 </div>
-<form method="post" class="deco-card p-6">
+<form method="post" enctype="multipart/form-data" class="deco-card p-6">
   {% csrf_token %}
+  {{ form.non_field_errors }}
   <div class="grid gap-4 md:grid-cols-2">
     {% for field in form %}
       <div {% if field.name == "address" %}class="md:col-span-2"{% endif %}>
         <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
-        {% for error in field.errors %}<p class="mt-1 text-sm text-red-100">{{ error }}</p>{% endfor %}
+        {% if field.help_text %}<p class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="mt-1 text-sm text-red-800">{{ error }}</p>{% endfor %}
       </div>
     {% endfor %}
   </div>
-  <div class="mt-6 flex gap-3">
+  <div class="mt-6 flex flex-wrap gap-3">
     <button class="btn-primary" type="submit">Enregistrer</button>
     <a class="btn-secondary" href="{% url 'churches:list' %}">Annuler</a>
   </div>

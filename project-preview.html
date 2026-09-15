@@ -1,0 +1,176 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tableau de bord - Ecclessia Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="file:///E:/Ecclessia-Manager/static/css/app.css">
+  
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-ecclesia-wash text-ecclesia-ink antialiased">
+  <a class="skip-link" href="#main-content">Aller au contenu</a>
+  <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
+    
+      <aside class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-ecclesia-gold/30 bg-ecclesia-black/95 transition-transform lg:static lg:translate-x-0"
+             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+        <div class="flex h-20 items-center border-b border-ecclesia-gold/25 px-5">
+          <div class="deco-diamond"><span>EM</span></div>
+          <div class="ml-3">
+            <p class="font-display text-sm uppercase tracking-[0.22em] text-ecclesia-cream">Ecclessia</p>
+            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">Manager</p>
+          </div>
+        </div>
+        <nav class="space-y-6 px-3 py-5 text-sm">
+          <div>
+            <p class="px-3 pb-3 text-xs font-bold uppercase tracking-[0.24em] text-ecclesia-gold">General</p>
+            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="/">Tableau de bord</a>
+            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="/rapports/">Rapports</a>
+            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="/rapports/nouveau/">Nouveau rapport</a>
+            
+              <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="/extensions/">Extensions</a>
+            
+          </div>
+        </nav>
+      </aside>
+    
+
+    <main id="main-content" class="min-w-0 flex-1" tabindex="-1">
+      
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ecclesia-gold/25 bg-ecclesia-black/90 px-4 backdrop-blur lg:px-8">
+          <button type="button" class="inline-flex h-11 w-11 cursor-pointer items-center justify-center border border-ecclesia-gold text-ecclesia-gold lg:hidden" @click="sidebarOpen = true" aria-label="Ouvrir le menu">
+            <span class="h-0.5 w-5 bg-ecclesia-gold"></span>
+          </button>
+          <div>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-ecclesia-cream">admin</p>
+            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">Administrateur</p>
+          </div>
+          <form method="post" action="/logout/">
+            <input type="hidden" name="csrfmiddlewaretoken" value="zV3vhZPnO4YmD5ZTjUcX0POlPxGVnnwJBnMlnwp4iopLt8OenZmxQDCq1wLTPfHF">
+            <button class="btn-secondary" type="submit">Deconnexion</button>
+          </form>
+        </header>
+      
+
+      <div class="p-4 lg:p-8">
+        
+          <div
+            x-data="reportRealtime()"
+            x-init="connect()"
+            x-show="message"
+            x-cloak
+            class="mb-4 border border-ecclesia-gold bg-ecclesia-gold/10 px-4 py-3 text-sm text-ecclesia-cream shadow-[0_0_18px_rgba(212,175,55,0.16)]"
+          >
+            <span x-text="message"></span>
+          </div>
+        
+        
+        
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <p class="deco-kicker">I. Vue generale</p>
+    <h1 class="deco-heading mt-2">Tableau de bord</h1>
+    <p class="mt-2 text-sm text-ecclesia-muted">Vue d'ensemble des extensions, cultes, finances et rapports.</p>
+  </div>
+  <a class="btn-primary" href="/rapports/nouveau/">Nouveau rapport</a>
+</div>
+
+<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="metric-card">
+    <p class="text-sm font-semibold text-ecclesia-muted">Extensions</p>
+    <p class="mt-3 text-3xl font-extrabold">3</p>
+  </div>
+  <div class="metric-card">
+    <p class="text-sm font-semibold text-ecclesia-muted">Rapports</p>
+    <p class="mt-3 text-3xl font-extrabold">1</p>
+  </div>
+  <div class="metric-card">
+    <p class="text-sm font-semibold text-ecclesia-muted">Presence totale</p>
+    <p class="mt-3 text-3xl font-extrabold">120</p>
+  </div>
+  <div class="metric-card">
+    <p class="text-sm font-semibold text-ecclesia-muted">Solde net</p>
+    <p class="mt-3 text-3xl font-extrabold">1039,5</p>
+  </div>
+</section>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+  <section class="deco-panel">
+    <div class="border-b border-ecclesia-gold/20 px-5 py-4">
+      <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Rapports recents</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="deco-table">
+        <thead>
+          <tr>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Extension</th>
+            <th class="px-4 py-3">Presence</th>
+            <th class="px-4 py-3">Offrandes</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td class="px-4 py-3 font-medium">24 juin 2026</td>
+              <td class="px-4 py-3">Nicosie Centre</td>
+              <td class="px-4 py-3">120</td>
+              <td class="px-4 py-3">1410,00</td>
+              <td class="px-4 py-3 text-right"><a class="deco-action" href="/rapports/1/">Voir</a></td>
+            </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="deco-panel p-5">
+    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Synthese par extension</h2>
+    <div class="mt-4 space-y-3">
+      
+        <div class="deco-mini-panel">
+          <div class="flex items-center justify-between gap-3">
+            <p class="font-semibold">Nicosie Centre</p>
+            <p class="text-sm text-ecclesia-muted">1 rapport(s)</p>
+          </div>
+          <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+            <p>Presence: <span class="font-semibold">120</span></p>
+            <p>Offrandes: <span class="font-semibold">1410</span></p>
+          </div>
+        </div>
+      
+    </div>
+  </section>
+</div>
+
+      </div>
+    </main>
+  </div>
+  
+    <script>
+      function reportRealtime() {
+        return {
+          socket: null,
+          message: "",
+          connect() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/reports/`);
+            this.socket.onmessage = (event) => {
+              const payload = JSON.parse(event.data);
+              if (payload.type === "report.created") {
+                this.message = `Nouveau rapport: ${payload.extension} (${payload.service_date})`;
+                window.setTimeout(() => { this.message = ""; }, 6000);
+              }
+            };
+          }
+        };
+      }
+    </script>
+  
+</body>
+</html>

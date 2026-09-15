@@ -1,33 +1,136 @@
-{% extends "base.html" %}
-{% block title %}Connexion - Ecclessia Manager{% endblock %}
-{% block content %}
-<div class="grid min-h-screen bg-ecclesia-wash lg:grid-cols-[1fr_520px]">
-  <section class="relative hidden items-end overflow-hidden border-r border-ecclesia-gold/30 bg-ecclesia-black p-12 text-ecclesia-cream lg:flex">
-    <div aria-hidden="true" class="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.22),transparent_30rem)]"></div>
-    <div aria-hidden="true" class="absolute left-1/2 top-0 h-full w-px bg-ecclesia-gold/20"></div>
-    <div class="relative max-w-2xl">
-      <div class="deco-divider"><span class="deco-kicker">Emerge in Christ</span></div>
-      <h1 class="mt-4 font-display text-6xl uppercase leading-tight tracking-[0.2em]">Rassemblement</h1>
-      <p class="mt-5 max-w-xl text-lg leading-relaxed text-ecclesia-muted">Rapports, finances et suivi pastoral dans un espace structure, luxueux et precis.</p>
+{% load static %}
+<!doctype html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion - Ecclessia Manager</title>
+  <link rel="icon" type="image/png" href="{% static 'branding/emerge-symbol.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
+</head>
+<body class="min-h-full bg-[#F7F6F4] font-sans antialiased text-fg">
+
+<div class="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
+
+  <!-- Original logo, shared by the desktop and mobile layouts. -->
+  <section class="brand-panel login-brand">
+    <img src="{% static 'LOGO EMERGE WHITE.png' %}" alt="Logo original de la Communauté Chrétienne EMERGE IN CHRIST" width="1000" height="1000" class="login-logo">
+    <p class="login-community">COMMUNAUTÉ CHRÉTIENNE<br><strong>EMERGE IN CHRIST « RASSEMBLEMENT »</strong></p>
+    <h1>Système de gestion interne</h1>
+    <p class="login-description">Un espace centralisé pour administrer la communauté, coordonner les activités et assurer le suivi des ressources.</p>
+    <p class="login-signature">Servons avec ordre, unité et excellence.</p>
+    <p class="login-values">Amour • Unité • Consécration • Excellence</p>
+  </section>
+
+  <!-- RIGHT: Login form -->
+  <section class="relative flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-16 xl:px-24 bg-[#F7F6F4]">
+    <div class="mx-auto w-full max-w-[420px]">
+
+      <div class="text-center lg:text-left">
+        <h2 class="font-display text-3xl tracking-tight text-fg">Connexion</h2>
+        <p class="mt-2 text-sm text-fg-muted">Accédez à votre espace de gestion.</p>
+      </div>
+
+      {% if form.errors %}
+        <div role="alert" class="mt-6 flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-800">
+          <svg class="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>Identifiants incorrects. Veuillez réessayer.</span>
+        </div>
+      {% endif %}
+
+      <form method="post" class="mt-8 space-y-6" x-data="{ loading: false, showPassword: false }" @submit="loading = true">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="space-y-5">
+          <!-- Username -->
+          <div>
+            <label class="mb-2 block" for="{{ form.username.id_for_label }}">Nom d’utilisateur</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-fg-muted">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <input type="{{ form.username.field.widget.input_type }}"
+                     name="{{ form.username.name }}"
+                     id="{{ form.username.id_for_label }}"
+                     class="pl-11"
+                     placeholder="Votre identifiant" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}"
+                     required>
+            </div>
+            {% for error in form.username.errors %}
+              <p class="mt-1.5 text-xs text-red-400">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label class="mb-2 block" for="{{ form.password.id_for_label }}">Mot de passe</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-fg-muted">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <input type="password" autocomplete="current-password" :type="showPassword ? 'text' : 'password'"
+                     name="{{ form.password.name }}"
+                     id="{{ form.password.id_for_label }}"
+                     class="pl-11 pr-11"
+                     placeholder="••••••••"
+                     required>
+              <button type="button"
+                      @click="showPassword = !showPassword"
+                      class="absolute inset-y-0 right-0 min-w-11 justify-center flex items-center text-fg-muted hover:text-fg transition-colors"
+                      aria-label="Afficher ou masquer le mot de passe" :aria-pressed="showPassword">
+                <svg x-show="!showPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg x-show="showPassword" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              </button>
+            </div>
+            {% for error in form.password.errors %}
+              <p class="mt-1.5 text-xs text-red-400">{{ error }}</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="flex items-center justify-between">
+
+          <a href="mailto:{{ support_email|default:'admin@emergeinchrist.org' }}?subject=R%C3%A9initialisation%20mot%20de%20passe" class="inline-flex min-h-11 items-center text-sm text-accent-bright hover:underline transition-colors">Mot de passe oublié ?</a>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-primary w-full flex items-center justify-center gap-2"
+                type="submit"
+                :disabled="loading"
+                :class="loading ? 'opacity-70 cursor-not-allowed' : ''">
+          <svg x-show="loading" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span x-text="loading ? 'Connexion...' : 'Se connecter'">Se connecter</span>
+        </button>
+      </form>
+
+      <div class="mt-8 flex items-center justify-center gap-2 text-sm font-medium text-fg-muted">
+        <svg class="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        Accès réservé aux utilisateurs autorisés.
+      </div>
+
     </div>
   </section>
-  <section class="flex items-center justify-center p-6">
-    <form method="post" class="deco-card w-full max-w-sm p-7">
-      {% csrf_token %}
-      <div class="mb-6">
-        <div class="deco-diamond"><span>EM</span></div>
-        <h2 class="mt-6 font-display text-3xl uppercase tracking-[0.22em] text-ecclesia-cream">Connexion</h2>
-        <p class="mt-2 text-sm text-ecclesia-muted">Accedez a votre tableau de bord.</p>
-      </div>
-      {% if form.errors %}
-        <div class="mb-4 border border-red-400/70 bg-red-950/40 px-3 py-2 text-sm text-red-100">Identifiants invalides.</div>
-      {% endif %}
-      <label class="block" for="{{ form.username.id_for_label }}">Nom utilisateur</label>
-      <div class="mt-1">{{ form.username }}</div>
-      <label class="mt-5 block" for="{{ form.password.id_for_label }}">Mot de passe</label>
-      <div class="mt-1">{{ form.password }}</div>
-      <button class="btn-primary mt-6 w-full" type="submit">Se connecter</button>
-    </form>
-  </section>
+
 </div>
-{% endblock %}
+
+</body>
+</html>

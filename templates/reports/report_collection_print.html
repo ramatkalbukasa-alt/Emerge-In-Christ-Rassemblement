@@ -1,77 +1,347 @@
+{% load static %}
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registre des rapports</title>
+  <title>Registre des Rapports - Ecclessia Manager</title>
   <style>
-    body {
-      background:
-        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.18), transparent 34rem),
-        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0 1px, transparent 1px 18px),
-        repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.035) 0 1px, transparent 1px 18px),
-        #0A0A0A;
-      color: #F2F0E4;
-      font-family: Arial, sans-serif;
-      margin: 32px;
+    :root {
+      --primary: #C90800;
+      --primary-dark: #A30700;
+      --gold: #FFD84D;
+      --slate-800: #1E293B;
+      --slate-600: #475569;
+      --slate-400: #94A3B8;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
     }
-    header { border-bottom: 2px double #D4AF37; margin-bottom: 24px; padding-bottom: 16px; }
-    h1 { color: #F2F0E4; font-family: Georgia, serif; font-size: 38px; letter-spacing: 0.18em; margin: 0 0 8px; text-transform: uppercase; }
-    table { background: #141414; border-collapse: collapse; box-shadow: 0 0 18px rgba(212, 175, 55, 0.12); width: 100%; }
-    th, td { border: 1px solid rgba(212, 175, 55, 0.45); padding: 8px 10px; text-align: left; }
-    th { background: rgba(30, 61, 89, 0.45); color: #D4AF37; }
-    .actions { margin-bottom: 24px; }
-    .actions button { border: 1px solid #D4AF37; background: #D4AF37; color: #0A0A0A; cursor: pointer; font-weight: 700; letter-spacing: 0.16em; padding: 12px 16px; text-transform: uppercase; }
+
+    body {
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 2rem 1rem;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .no-print-bar {
+      max-width: 297mm; /* Landscape orientation support */
+      margin: 0 auto 1.5rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-print {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(185, 28, 28, 0.1), 0 2px 4px -1px rgba(185, 28, 28, 0.06);
+      transition: background-color 0.2s;
+    }
+    .btn-print:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-back {
+      color: var(--slate-600);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-back:hover {
+      color: var(--slate-800);
+    }
+
+    .a4-page-landscape {
+      background: white;
+      width: 297mm; /* A4 Landscape width */
+      min-height: 210mm; /* A4 Landscape height */
+      margin: 0 auto;
+      padding: 15mm;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+      box-sizing: border-box;
+      position: relative;
+      border: 1px solid var(--slate-200);
+    }
+
+    /* Paper Header */
+    .document-header {
+      border-bottom: 2px solid var(--slate-800);
+      padding-bottom: 1.2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .header-left h1 {
+      font-family: Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: normal;
+      color: var(--slate-800);
+      margin: 0 0 0.3rem 0;
+      letter-spacing: 0.03em;
+    }
+    .header-left p {
+      font-size: 0.95rem;
+      color: var(--primary);
+      margin: 0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--slate-600);
+    }
+
+    /* Table design */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      border: 1px solid var(--slate-200);
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+      font-weight: 600;
+    }
+
+    td {
+      color: var(--slate-700);
+    }
+
+    .font-mono-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+    }
+
+    .total-row th, .total-row td {
+      font-weight: bold;
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+    }
+
+    .text-emerald {
+      color: #059669 !important;
+    }
+    .text-red {
+      color: #DC2626 !important;
+    }
+
+    .signature-container {
+      display: grid;
+      grid-template-cols: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 3rem;
+      font-size: 0.8rem;
+    }
+    .signature-box {
+      border-top: 1px solid var(--slate-400);
+      padding-top: 0.4rem;
+    }
+    .signature-box label {
+      font-weight: bold;
+      color: var(--slate-800);
+      display: block;
+    }
+    .signature-box span {
+      color: var(--slate-400);
+      font-size: 0.7rem;
+    }
+    .signature-line {
+      height: 2.5rem;
+    }
+
+    /* Print settings */
     @media print {
-      body { background: white; color: #111827; margin: 14mm; }
-      header { border-bottom-color: #111827; }
-      h1 { color: #111827; }
-      table { background: white; box-shadow: none; }
-      th, td { border-color: #d1d5db; }
-      th { background: #f3f4f6; color: #111827; }
-      .actions { display: none; }
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+      body {
+        background-color: white;
+        color: black;
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .a4-page-landscape {
+        width: 100%;
+        min-height: auto;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+      }
+      th {
+        background-color: #F8FAFC !important;
+      }
+      .total-row th, .total-row td {
+        background-color: #F8FAFC !important;
+      }
     }
   </style>
+  <link rel="stylesheet" href="{% static 'css/print.css' %}">
 </head>
 <body>
-  <div class="actions">
-    <button type="button" onclick="window.print()">Imprimer</button>
+
+  <!-- Controls (hidden on print) -->
+  <div class="no-print-bar no-print">
+    <a href="javascript:window.history.back();" class="btn-back">
+      <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Retour
+    </a>
+    <button type="button" class="btn-print" onclick="window.print()">
+      <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+      </svg>
+      Imprimer le registre
+    </button>
   </div>
 
-  <header>
-    <h1>Registre des rapports</h1>
-    <p>Presences, offrandes, ventilations et soldes par extension.</p>
-  </header>
+  <!-- A4 Landscape Printable Sheet -->
+  <div class="a4-page-landscape">
 
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Extension</th>
-        <th>Type</th>
-        <th>Presence</th>
-        <th>Offrandes</th>
-        <th>Dime</th>
-        <th>Social</th>
-        <th>Solde</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for report in reports %}
+    <div class="document-header">
+      {% include "includes/brand_symbol.html" %}
+      <div class="header-left">
+        <h1>Registre des Rapports Pastoraux</h1>
+        <p>Ecclessia Manager — État Récapitulatif Consolidé</p>
+      </div>
+      <div class="header-right">
+        <div>Date d'édition : <span id="current-date"></span></div>
+        <div>Nombre de cultes : {{ reports|length }}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
         <tr>
-          <td>{{ report.service_date }}</td>
-          <td>{{ report.extension.name }}</td>
-          <td>{{ report.get_service_type_display }}</td>
-          <td>{{ report.total_attendance }}</td>
-          <td>{{ report.total_offerings }}</td>
-          <td>{{ report.tithe_deduction }}</td>
-          <td>{{ report.social_deduction }}</td>
-          <td>{{ report.net_balance }}</td>
+          <th>Date culte</th>
+          <th>Extension locale</th>
+          <th>Type culte</th>
+          <th>Présence</th>
+          <th>Offrandes brutes</th>
+          <th>Dîme transmise</th>
+          <th>Fonds social</th>
+          <th>Solde disponible</th>
         </tr>
-      {% empty %}
-        <tr><td colspan="8">Aucun rapport enregistre.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td class="font-mono-val">{{ report.service_date }}</td>
+            <td style="font-weight: 500;">{{ report.extension.name }}</td>
+            <td>{{ report.get_service_type_display }}</td>
+            <td class="font-mono-val">{{ report.total_attendance }}</td>
+            <td class="font-mono-val">{{ report.total_offerings }} FCFA</td>
+            <td class="font-mono-val">{{ report.tithe_deduction }} FCFA</td>
+            <td class="font-mono-val">{{ report.social_deduction }} FCFA</td>
+            <td class="font-mono-val font-semibold {% if report.net_balance >= 0 %}text-emerald{% else %}text-red{% endif %}">
+              {{ report.net_balance }} FCFA
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem; color: var(--slate-400);">
+              Aucun rapport enregistré dans le système.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="total-row">
+        <tr>
+          <td colspan="3" style="text-align: right; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Total Général</td>
+          <td id="total-presence" class="font-mono-val">0</td>
+          <td id="total-offrandes" class="font-mono-val">0 FCFA</td>
+          <td id="total-dimes" class="font-mono-val">0 FCFA</td>
+          <td id="total-social" class="font-mono-val">0 FCFA</td>
+          <td id="total-solde" class="font-mono-val">0 FCFA</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Signature Block -->
+    <div class="signature-container">
+      <div class="signature-box">
+        <label>Comité de Caisse & Secrétariat National</label>
+        <span>Visa et signature</span>
+        <div class="signature-line"></div>
+      </div>
+      <div class="signature-box" style="text-align: right;">
+        <label>Direction des Finances & Administration</label>
+        <span>Visa et signature</span>
+        <div class="signature-line"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Current date formatting
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById("current-date").textContent = new Date().toLocaleDateString('fr-FR', options);
+
+      // Total calculations
+      let presence = 0, offrandes = 0, dimes = 0, social = 0, solde = 0;
+
+      document.querySelectorAll("tbody tr").forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length < 8) return;
+
+        const getVal = (cell) => {
+          const txt = cell.textContent.replace(/[^0-9.-]/g, '');
+          return parseFloat(txt) || 0;
+        };
+
+        presence += getVal(cells[3]);
+        offrandes += getVal(cells[4]);
+        dimes += getVal(cells[5]);
+        social += getVal(cells[6]);
+        solde += getVal(cells[7]);
+      });
+
+      document.getElementById("total-presence").textContent = presence.toLocaleString('fr-FR');
+      document.getElementById("total-offrandes").textContent = offrandes.toLocaleString('fr-FR') + " FCFA";
+      document.getElementById("total-dimes").textContent = dimes.toLocaleString('fr-FR') + " FCFA";
+      document.getElementById("total-social").textContent = social.toLocaleString('fr-FR') + " FCFA";
+
+      const soldeTd = document.getElementById("total-solde");
+      soldeTd.textContent = solde.toLocaleString('fr-FR') + " FCFA";
+      if (solde >= 0) {
+        soldeTd.classList.add("text-emerald");
+      } else {
+        soldeTd.classList.add("text-red");
+      }
+    });
+  </script>
 </body>
 </html>

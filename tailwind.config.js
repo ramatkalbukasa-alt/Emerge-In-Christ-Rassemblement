@@ -8,23 +8,42 @@ module.exports = {
     extend: {
       colors: {
         ecclesia: {
-          ink: "#F2F0E4",
-          muted: "#A6A095",
-          line: "rgba(212, 175, 55, 0.32)",
-          paper: "#141414",
-          wash: "#0A0A0A",
+          ink: "#0F172A",
+          muted: "#64748B",
+          line: "#E2E8F0",
+          paper: "#FFFFFF",
+          wash: "#FAFAFA",
           green: "#D4AF37",
-          gold: "#D4AF37",
-          blue: "#1E3D59",
-          black: "#0A0A0A",
-          cream: "#F2F0E4",
-          charcoal: "#141414",
-          pewter: "#888888"
-        }
+          gold: "#B91C1C", // Primary red
+          blue: "#D4AF37", // Secondary gold
+          black: "#0F172A", // Slate background for dark/inverted areas
+          cream: "#FFFFFF", // Light text for dark areas
+          charcoal: "#FFFFFF", // Card backgrounds
+          pewter: "#94A3B8"
+        },
+        // ── Linear / Modern design system ──────────────────────────────
+        bg: {
+          deep: "#020203",
+          base: "#050506",
+          elevated: "#0a0a0c"
+        },
+        fg: {
+          DEFAULT: "rgb(var(--fg) / <alpha-value>)",
+          muted: "rgb(var(--muted) / <alpha-value>)",
+          subtle: "rgba(255,255,255,0.60)"
+        },
+        accent: {
+          DEFAULT: "#C90800",
+          bright: "rgb(var(--accent-text) / <alpha-value>)",
+          glow: "rgba(201,8,0,0.2)"
+        },
+        gold: "#FFD84D",
+        bronze: "#9A642E"
       },
       fontFamily: {
-        sans: ["Josefin Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Marcellus", "serif"]
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"]
       }
     }
   },

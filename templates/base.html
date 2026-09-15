@@ -1,97 +1,398 @@
-{% load static %}
+{% load static report_extras %}
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Ecclessia Manager{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'branding/emerge-symbol.png' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  {% if debug %}
-    <script src="https://cdn.tailwindcss.com"></script>
-  {% endif %}
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="{% static 'js/interface.js' %}"></script>
+  <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
 </head>
-<body class="min-h-screen bg-ecclesia-wash text-ecclesia-ink antialiased">
+<body class="min-h-full bg-[#F7F6F4] font-sans antialiased text-fg">
   <a class="skip-link" href="#main-content">Aller au contenu</a>
-  <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
+
+  <div x-data="{
+    sidebarOpen: false,
+    desktop: window.innerWidth >= 1024,
+    periodicModalOpen: false,
+    pType: 'monthly',
+    pYear: new Date().getFullYear(),
+    pMonth: new Date().getMonth() + 1,
+    pQuarter: Math.floor(new Date().getMonth() / 3) + 1,
+    openPeriodicReport() {
+      if (!this.$refs.periodYear.reportValidity()) return;
+      let url = '';
+      if (this.pType === 'monthly') {
+        url = `/rapports/mensuel/${this.pYear}/${this.pMonth}/imprimer/`;
+      } else if (this.pType === 'quarterly') {
+        url = `/rapports/trimestriel/${this.pYear}/${this.pQuarter}/imprimer/`;
+      } else {
+        url = `/rapports/annuel/${this.pYear}/imprimer/`;
+      }
+      window.open(url, '_blank', 'noopener');
+      this.periodicModalOpen = false;
+    }
+  }" @resize.window="desktop = window.innerWidth >= 1024" class="relative z-10 min-h-screen lg:flex">
+
+    <!-- Sidebar -->
     {% if user.is_authenticated %}
-      <aside class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-ecclesia-gold/30 bg-ecclesia-black/95 transition-transform lg:static lg:translate-x-0"
+      <aside id="app-sidebar" :inert="!sidebarOpen &amp;&amp; !desktop" aria-label="Menu principal" @keydown.escape.window="sidebarOpen = false" class="app-sidebar fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-white/[0.06] bg-[#0a0a0c]/95 backdrop-blur-xl text-fg transition-transform lg:static lg:translate-x-0 flex flex-col justify-between"
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="flex h-20 items-center border-b border-ecclesia-gold/25 px-5">
-          <div class="deco-diamond"><span>EM</span></div>
-          <div class="ml-3">
-            <p class="font-display text-sm uppercase tracking-[0.22em] text-ecclesia-cream">Ecclessia</p>
-            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">Manager</p>
+
+        <div>
+          <!-- Logo Area -->
+          <div class="sidebar-brand">
+            <a href="{% url 'dashboard:home' %}" aria-label="Emerge In Christ — Accueil">
+              {% include "includes/brand_symbol.html" %}
+              <span class="brand-name">EMERGE IN CHRIST</span>
+              <span class="brand-subtitle">RASSEMBLEMENT</span>
+            </a>
+            <button type="button" @click="sidebarOpen = false" class="sidebar-close lg:hidden" aria-label="Fermer le menu">×</button>
+          </div>
+
+          <!-- Navigation Links -->
+          <nav class="space-y-6 px-4 py-6 text-sm">
+            <div>
+              <p class="px-3 pb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-muted">Général</p>
+              <div class="space-y-1.5">
+                {% url 'dashboard:home' as dashboard_url %}
+                <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path == dashboard_url %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                   href="{{ dashboard_url }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                  Tableau de bord
+                </a>
+
+                {% url 'reports:list' as reports_list_url %}
+                {% url 'reports:create' as reports_create_url %}
+                <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path|startswith:'/rapports/' and request.path != reports_create_url and not request.path|startswith:'/rapports/recettes' and not request.path|startswith:'/rapports/depenses' %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                   href="{{ reports_list_url }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Rapports
+                </a>
+
+                <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path == reports_create_url %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                   href="{{ reports_create_url }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                  Nouveau rapport
+                </a>
+
+                {% url 'reports:extra_income_list' as extra_income_url %}
+                <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path|startswith:'/rapports/recettes-supplementaires' %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                   href="{{ extra_income_url }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Recettes supp.
+                </a>
+
+                {% url 'reports:extra_expense_list' as extra_expense_url %}
+                <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path|startswith:'/rapports/depenses-supplementaires' %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                   href="{{ extra_expense_url }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  Dépenses supp.
+                </a>
+
+                {% if user.profile.role == "admin" %}
+                  {% url 'churches:list' as churches_list_url %}
+                  <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path|startswith:'/extensions/' %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
+                     href="{{ churches_list_url }}">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    Extensions
+                  </a>
+
+                  <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg"
+                     href="/admin/" target="_blank" rel="noopener noreferrer">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Admin Django
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Rapports Périodiques -->
+            <div>
+              <div class="flex items-center justify-between px-3 pb-3">
+                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-muted">Rapports Périodiques</p>
+                <button type="button" @click="periodicModalOpen = true" class="text-[10px] text-accent-bright hover:underline font-mono uppercase tracking-wider">
+                  Choisir
+                </button>
+              </div>
+              <div class="space-y-1.5">
+                <button type="button"
+                        @click="pType = 'monthly'; periodicModalOpen = true"
+                        class="w-full flex items-center justify-between px-4 py-2.5 font-medium text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg transition-all duration-200 text-left">
+                  <span class="flex items-center gap-3">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Mensuel
+                  </span>
+                  <span class="text-[10px] font-mono text-fg-muted/70">Mois</span>
+                </button>
+
+                <button type="button"
+                        @click="pType = 'quarterly'; periodicModalOpen = true"
+                        class="w-full flex items-center justify-between px-4 py-2.5 font-medium text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg transition-all duration-200 text-left">
+                  <span class="flex items-center gap-3">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Trimestriel
+                  </span>
+                  <span class="text-[10px] font-mono text-fg-muted/70">Trim.</span>
+                </button>
+
+                <button type="button"
+                        @click="pType = 'annual'; periodicModalOpen = true"
+                        class="w-full flex items-center justify-between px-4 py-2.5 font-medium text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg transition-all duration-200 text-left">
+                  <span class="flex items-center gap-3">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                    Annuel
+                  </span>
+                  <span class="text-[10px] font-mono text-fg-muted/70">Année</span>
+                </button>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        <!-- Sidebar footer info -->
+        <div class="sidebar-footer p-4 border-t border-white/[0.06] text-[11px] text-fg-muted flex items-center justify-between">
+          <span class="text-xs">Un peuple. Une présence.<br>Christ au centre.</span>
+          <span>© {% now "Y" %} Emerge</span>
+        </div>
+      </aside>
+
+      <!-- Periodic Report Selector Modal -->
+      <div x-show="periodicModalOpen" x-cloak
+           role="dialog" aria-modal="true" aria-labelledby="periodic-title" class="periodic-dialog fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+           @keydown.escape.window="periodicModalOpen = false">
+        <div @click.away="periodicModalOpen = false"
+             class="w-full max-w-md rounded-2xl border border-white/10 bg-white p-6 shadow-2xl space-y-5">
+          <div class="flex items-center justify-between border-b border-white/[0.06] pb-4">
+            <div>
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent-bright">Génération de rapport</p>
+              <h3 id="periodic-title" class="font-display text-lg text-fg mt-1">Rapport Périodique</h3>
+            </div>
+            <button type="button" @click="periodicModalOpen = false" aria-label="Fermer" class="p-1 rounded-lg text-fg-muted hover:text-fg hover:bg-white/[0.05]">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <div class="space-y-4 text-sm">
+            <!-- Choix du type -->
+            <div>
+              <label class="block mb-2">Périodicité</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button"
+                        @click="pType = 'monthly'"
+                        :class="pType === 'monthly' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        class="h-10 rounded-lg border text-xs transition-colors">
+                  Mensuel
+                </button>
+                <button type="button"
+                        @click="pType = 'quarterly'"
+                        :class="pType === 'quarterly' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        class="h-10 rounded-lg border text-xs transition-colors">
+                  Trimestriel
+                </button>
+                <button type="button"
+                        @click="pType = 'annual'"
+                        :class="pType === 'annual' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        class="h-10 rounded-lg border text-xs transition-colors">
+                  Annuel
+                </button>
+              </div>
+            </div>
+
+            <!-- Année -->
+            <div>
+              <label for="pYear" class="block mb-2">Année</label>
+              <input id="pYear" x-ref="periodYear" type="number" min="1900" max="9999" step="1" required x-model.number="pYear" class="h-11">
+            </div>
+
+            <!-- Mois si mensuel -->
+            <div x-show="pType === 'monthly'">
+              <label for="pMonth" class="block mb-2">Mois</label>
+              <select id="pMonth" x-model.number="pMonth" class="h-11">
+                <option value="1">01 - Janvier</option>
+                <option value="2">02 - Février</option>
+                <option value="3">03 - Mars</option>
+                <option value="4">04 - Avril</option>
+                <option value="5">05 - Mai</option>
+                <option value="6" selected>06 - Juin</option>
+                <option value="7">07 - Juillet</option>
+                <option value="8">08 - Août</option>
+                <option value="9">09 - Septembre</option>
+                <option value="10">10 - Octobre</option>
+                <option value="11">11 - Novembre</option>
+                <option value="12">12 - Décembre</option>
+              </select>
+            </div>
+
+            <!-- Trimestre si trimestriel -->
+            <div x-show="pType === 'quarterly'">
+              <label for="pQuarter" class="block mb-2">Trimestre</label>
+              <select id="pQuarter" x-model.number="pQuarter" class="h-11">
+                <option value="1">1er Trimestre (Janvier - Mars)</option>
+                <option value="2" selected>2ème Trimestre (Avril - Juin)</option>
+                <option value="3">3ème Trimestre (Juillet - Septembre)</option>
+                <option value="4">4ème Trimestre (Octobre - Décembre)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-3 border-t border-white/[0.06]">
+            <button type="button"
+                    @click="openPeriodicReport()"
+                    class="btn-primary flex-1 flex items-center justify-center gap-2">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+              </svg>
+              <span>Ouvrir le rapport</span>
+            </button>
+            <button type="button"
+                    @click="periodicModalOpen = false"
+                    class="btn-secondary">
+              Annuler
+            </button>
           </div>
         </div>
-        <nav class="space-y-6 px-3 py-5 text-sm">
-          <div>
-            <p class="px-3 pb-3 text-xs font-bold uppercase tracking-[0.24em] text-ecclesia-gold">General</p>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'dashboard:home' %}">Tableau de bord</a>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'reports:list' %}">Rapports</a>
-            <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'reports:create' %}">Nouveau rapport</a>
-            {% if user.profile.role == "admin" %}
-              <a class="block border-l border-transparent px-3 py-3 font-semibold uppercase tracking-[0.16em] text-ecclesia-muted transition-all duration-300 hover:border-ecclesia-gold hover:bg-ecclesia-gold/10 hover:text-ecclesia-cream focus:outline-none focus:ring-2 focus:ring-ecclesia-gold" href="{% url 'churches:list' %}">Extensions</a>
-            {% endif %}
-          </div>
-        </nav>
-      </aside>
+      </div>
+
+      <!-- Mobile sidebar backdrop -->
+      <div x-show="sidebarOpen" x-cloak x-transition.opacity
+           class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+           @click="sidebarOpen = false" aria-hidden="true"></div>
     {% endif %}
 
-    <main id="main-content" class="min-w-0 flex-1" tabindex="-1">
+    <!-- Main Section -->
+    <main id="main-content" class="min-w-0 flex-1 flex flex-col" tabindex="-1">
+
+      <!-- Top Header -->
       {% if user.is_authenticated %}
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ecclesia-gold/25 bg-ecclesia-black/90 px-4 backdrop-blur lg:px-8">
-          <button type="button" class="inline-flex h-11 w-11 cursor-pointer items-center justify-center border border-ecclesia-gold text-ecclesia-gold lg:hidden" @click="sidebarOpen = true" aria-label="Ouvrir le menu">
-            <span class="h-0.5 w-5 bg-ecclesia-gold"></span>
+        <header class="app-header sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/[0.06] bg-white/95 px-6 backdrop-blur-xl lg:px-8">
+          <button type="button" class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/10 text-fg-muted lg:hidden hover:bg-white/[0.05] hover:text-fg focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  @click="sidebarOpen = true" aria-label="Ouvrir le menu" aria-controls="app-sidebar" :aria-expanded="sidebarOpen">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
+
           <div>
-            <p class="text-sm font-bold uppercase tracking-[0.18em] text-ecclesia-cream">{{ user.get_full_name|default:user.username }}</p>
-            <p class="text-xs uppercase tracking-[0.18em] text-ecclesia-gold">{{ user.profile.get_role_display }}</p>
+            <p class="text-sm font-semibold text-fg">{{ user.get_full_name|default:user.username }}</p>
+            <p class="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-accent-bright">{{ user.profile.get_role_display }}</p>
           </div>
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button class="btn-secondary" type="submit">Deconnexion</button>
-          </form>
+
+          <!-- Actions droite : cloche + déconnexion -->
+          <div class="flex items-center gap-3">
+
+            <!-- Cloche de notifications -->
+            <div x-data="{ open: false }" class="relative">
+              <button @click="open = !open" @click.away="open = false"
+                      class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-fg-muted hover:bg-white/[0.05] hover:text-fg focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
+                      aria-label="Notifications" :aria-expanded="open" @keydown.escape.window="open = false">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                {% if notif_unread_count > 0 %}
+                  <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white text-[9px] font-bold shadow-[0_0_0_1px_rgba(94,106,210,0.5),0_2px_8px_rgba(94,106,210,0.4)]">
+                    {{ notif_unread_count }}
+                  </span>
+                {% endif %}
+              </button>
+
+              <!-- Panel déroulant -->
+              <div x-show="open" x-cloak x-transition
+                   class="notification-panel absolute right-0 top-12 z-50 w-80 rounded-2xl border border-white/[0.08] bg-white backdrop-blur-xl overflow-hidden"
+                   style="box-shadow: 0 0 0 1px rgba(10,10,10,0.08), 0 8px 40px rgba(0,0,0,0.5), 0 0 80px rgba(94,106,210,0.08);">
+                <div class="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                  <span class="text-sm font-semibold text-fg">Notifications</span>
+                  {% if notif_unread_count > 0 %}
+                    <a href="{% url 'notifications:mark_all_read' %}" class="text-xs text-accent-bright hover:text-white hover:underline font-medium">Tout marquer lu</a>
+                  {% endif %}
+                </div>
+                <div class="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
+                  {% for notif in notif_recent %}
+                    <a href="{% url 'notifications:mark_read' notif.pk %}"
+                       class="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors {% if not notif.is_read %}bg-accent/[0.06]{% endif %}">
+                      <span class="mt-1 h-2 w-2 rounded-full flex-shrink-0 {% if not notif.is_read %}bg-accent-bright{% else %}bg-white/20{% endif %}"></span>
+                      <div class="min-w-0">
+                        <p class="text-xs font-semibold text-fg truncate">{{ notif.title }}</p>
+                        <p class="text-[10px] text-fg-muted mt-0.5 line-clamp-2">{{ notif.body }}</p>
+                        <p class="text-[9px] text-fg-muted/70 mt-1">{{ notif.created_at|date:"d/m/Y à H:i" }}</p>
+                      </div>
+                    </a>
+                  {% empty %}
+                    <div class="px-4 py-6 text-center text-xs text-fg-muted">Aucune notification</div>
+                  {% endfor %}
+                </div>
+                <div class="border-t border-white/[0.06] px-4 py-2.5">
+                  <a href="{% url 'notifications:list' %}" class="text-xs text-accent-bright hover:text-white hover:underline font-medium">Voir toutes les notifications →</a>
+                </div>
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="btn-secondary" type="submit">Déconnexion</button>
+            </form>
+          </div>
         </header>
       {% endif %}
 
-      <div class="{% if user.is_authenticated %}p-4 lg:p-8{% endif %}">
+      <!-- Content Area -->
+      <div class="app-content flex-1 p-6 lg:p-10">
+
+        <!-- Live Real-Time Banner -->
         {% if user.is_authenticated %}
           <div
             x-data="reportRealtime()"
             x-init="connect()"
             x-show="message"
             x-cloak
-            class="mb-4 border border-ecclesia-gold bg-ecclesia-gold/10 px-4 py-3 text-sm text-ecclesia-cream shadow-[0_0_18px_rgba(212,175,55,0.16)]"
+            class="mb-6 flex items-center gap-3 rounded-2xl border border-accent/20 bg-accent/[0.06] px-5 py-4 text-sm text-fg backdrop-blur-sm"
           >
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-bright"></span>
+            </span>
             <span x-text="message"></span>
           </div>
         {% endif %}
+
         {% for message in messages %}
-          <div class="mb-4 border border-ecclesia-gold/40 bg-ecclesia-charcoal px-4 py-3 text-sm text-ecclesia-cream">{{ message }}</div>
+          <div class="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] px-5 py-4 text-sm text-fg backdrop-blur-sm">{{ message }}</div>
         {% endfor %}
+
         {% block content %}{% endblock %}
       </div>
     </main>
   </div>
+
   {% if user.is_authenticated %}
     <script>
       function reportRealtime() {
         return {
           socket: null,
           message: "",
+          retryTimeout: null,
           connect() {
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
             this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/reports/`);
             this.socket.onmessage = (event) => {
-              const payload = JSON.parse(event.data);
-              if (payload.type === "report.created") {
-                this.message = `Nouveau rapport: ${payload.extension} (${payload.service_date})`;
-                window.setTimeout(() => { this.message = ""; }, 6000);
-              }
+              try {
+                const payload = JSON.parse(event.data);
+                if (payload.type === "report.created") {
+                  this.message = `📋 Nouveau rapport : ${payload.extension} (${payload.service_date})`;
+                  window.setTimeout(() => { this.message = ""; }, 7000);
+                }
+              } catch (e) {}
+            };
+            this.socket.onclose = () => {
+              clearTimeout(this.retryTimeout);
+              this.retryTimeout = setTimeout(() => {
+                this.connect();
+              }, 5000);
+            };
+            this.socket.onerror = () => {
+              if (this.socket) this.socket.close();
             };
           }
         };

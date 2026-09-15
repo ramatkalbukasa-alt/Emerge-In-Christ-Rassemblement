@@ -1,0 +1,13 @@
+Nouveau rapport de culte — {{ extension.name }}
+===========================================
+
+Extension : {{ extension.name }}
+Date du culte : {{ report.service_date|date:"d/m/Y" }}
+Type : {{ report.get_service_type_display }}
+Prédicateur : {{ report.preacher|default:"—" }}
+Présence totale : {{ report.total_attendance }}
+Total offrandes : {{ currency_symbol }} {{ report.total_offerings|floatformat:2 }}
+Solde net : {{ currency_symbol }} {{ report.net_balance|floatformat:2 }}
+Soumis par : {{ report.submitted_by.get_full_name|default:report.submitted_by.username }}
+
+-- {{ site_name }} --

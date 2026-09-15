@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Nouveau rapport — {{ extension.name }}</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f5f7fa;margin:0;padding:24px}
+  .card{max-width:520px;margin:0 auto;background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}
+  .header{background:#1a3a6b;color:#fff;padding:24px 32px;text-align:center}
+  .header h1{font-size:16pt;margin:0 0 4px;font-weight:700}
+  .header p{font-size:9pt;margin:0;opacity:.8}
+  .body{padding:28px 32px}
+  .kpi-row{display:flex;gap:12px;margin:16px 0}
+  .kpi{flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center}
+  .kpi-label{font-size:8pt;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px}
+  .kpi-value{font-size:14pt;font-weight:700;color:#1a3a6b}
+  .btn{display:inline-block;background:#B91C1C;color:#fff;text-decoration:none;padding:10px 28px;border-radius:8px;font-size:10pt;font-weight:600;margin-top:12px}
+  .footer{background:#f0f4fc;padding:16px 32px;font-size:8pt;color:#64748b;text-align:center;border-top:1px solid #e2e8f0}
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>📋 Nouveau rapport de culte</h1>
+    <p>{{ site_name }}</p>
+  </div>
+  <div class="body">
+    <p style="color:#334155;font-size:10pt">Un nouveau rapport vient d'être soumis pour <strong>{{ extension.name }}</strong>.</p>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Date</div>
+        <div class="kpi-value" style="font-size:11pt">{{ report.service_date|date:"d/m/Y" }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Présence</div>
+        <div class="kpi-value">{{ report.total_attendance }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Solde net</div>
+        <div class="kpi-value" style="font-size:11pt">{{ currency_symbol }} {{ report.net_balance|floatformat:2 }}</div>
+      </div>
+    </div>
+    <p style="font-size:9pt;color:#64748b">Soumis par : <strong>{{ report.submitted_by.get_full_name|default:report.submitted_by.username }}</strong></p>
+    <center><a class="btn" href="{{ site_name }}">Consulter le rapport</a></center>
+  </div>
+  <div class="footer">{{ site_name }} &bull; Rapport généré le {{ now|date:"d/m/Y à H:i" }}</div>
+</div>
+</body></html>

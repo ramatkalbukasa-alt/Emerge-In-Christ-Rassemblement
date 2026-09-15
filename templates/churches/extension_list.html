@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Extensions - Ecclessia Manager{% endblock %}
 {% block content %}
 <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
   <div>
     <p class="deco-kicker">II. Administration</p>
     <h1 class="deco-heading mt-2">Extensions</h1>
-    <p class="mt-1 text-sm text-ecclesia-muted">Sites locaux, responsables et devise de gestion.</p>
+    <p class="mt-1 text-sm text-fg-muted">Sites locaux, responsables et devise de gestion.</p>
   </div>
   <a class="btn-primary" href="{% url 'churches:create' %}">Ajouter</a>
 </div>
@@ -28,18 +29,18 @@
           <tr>
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
-                <span class="h-3 w-3 rotate-45 border border-ecclesia-gold" style="background: {{ extension.color }}"></span>
+                <span class="h-3 w-3 rotate-45 border border-accent-bright" style="background: {{ extension.color }}"></span>
                 <span class="font-semibold">{{ extension.name }}</span>
               </div>
             </td>
             <td class="px-4 py-3">{{ extension.city }}</td>
             <td class="px-4 py-3">{{ extension.pastor_name }}</td>
-            <td class="px-4 py-3">{{ extension.currency }}</td>
+            <td class="px-4 py-3">{{ extension.currency.code|default:"—" }}</td>
             <td class="px-4 py-3">{% if extension.is_active %}Active{% else %}Suspendue{% endif %}</td>
             <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'churches:update' extension.slug %}">Modifier</a></td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="6">Aucune extension creee.</td></tr>
+          <tr><td class="px-4 py-6 text-fg-muted" colspan="6">Aucune extension creee.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,0 +1,251 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rapport Mensuel — {{ month_name }} {{ year }}</title>
+  <style>
+    :root { --blue:#C90800;--blue2:#9A642E;--border:#dde3ec;--bg:#f5f7fa; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1a1a2e;background:#eef1f7;padding:24px 12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .no-print-bar{max-width:297mm;margin:0 auto 16px;display:flex;justify-content:space-between;align-items:center}
+    .btn-print{background:var(--blue);color:#fff;border:none;padding:8px 20px;font-size:9pt;font-weight:600;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+    .btn-back{color:#555;text-decoration:none;font-size:9pt;display:inline-flex;align-items:center;gap:4px}
+    .a4-page{background:#fff;width:297mm;min-height:210mm;margin:0 auto;padding:14mm 16mm;box-shadow:0 8px 32px rgba(0,0,0,.12);border:1px solid var(--border)}
+    .doc-header{text-align:center;border-bottom:2.5px solid var(--blue);padding-bottom:10px;margin-bottom:14px}
+    .logo-wrap{display:flex;justify-content:center;margin-bottom:6px}
+    .logo-wrap img{height:50px;object-fit:contain}
+    .logo-placeholder{width:50px;height:50px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16pt}
+    .doc-header h1{font-size:12pt;font-weight:700;color:var(--blue);letter-spacing:.04em;text-transform:uppercase}
+    .doc-header h2{font-size:9.5pt;font-weight:600;color:var(--blue2);letter-spacing:.1em;text-transform:uppercase;margin:3px 0 2px}
+    .doc-header .doc-date{font-size:8.5pt;color:#555;margin-top:2px}
+    .section-title{background:var(--blue);color:#fff;font-size:7.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;margin:10px 0 0}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+    .kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center}
+    .kpi-card .kpi-label{font-size:7pt;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:4px}
+    .kpi-card .kpi-value{font-size:12pt;font-weight:700;color:var(--blue)}
+    .kpi-card .kpi-sub{font-size:7pt;color:#888;margin-top:2px}
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-top:none;font-size:8.5pt}
+    th,td{border:1px solid var(--border);padding:4px 7px}
+    thead th{background:#FFF6E5;color:var(--blue);font-weight:700;font-size:7.5pt;text-align:center;text-transform:uppercase;letter-spacing:.04em}
+    tfoot td{font-weight:700;background:#FFF1D0;color:var(--blue);text-align:right}
+    tfoot td:first-child{text-align:left}
+    td.num{text-align:right;font-family:monospace}
+    td.center{text-align:center}
+    td.positive{color:#1a7a4a;font-weight:600}
+    td.negative{color:#c0392b;font-weight:600}
+    .usd-note{margin-top:12px;padding:8px 12px;background:#f0f8f0;border:1px solid #b8ddb8;border-radius:6px;font-size:8pt;color:#2a6e3f}
+    .signatures{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:24px;border-top:1.5px solid var(--border);padding-top:10px}
+    .sig-box{text-align:center}
+    .sig-role{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:18px}
+    .sig-name{font-size:8pt;color:#444;border-top:1px solid #aaa;padding-top:4px}
+    .doc-footer{margin-top:14px;border-top:1px solid var(--border);padding-top:5px;font-size:7pt;color:#888;text-align:center}
+    @media print{
+      @page{size:A4 landscape;margin:10mm}
+      body{background:#fff;padding:0}
+      .no-print{display:none !important}
+      .a4-page{width:100%;min-height:auto;padding:0;box-shadow:none;border:none;margin:0}
+      thead th{background:#FFF6E5 !important}
+      tfoot td{background:#FFF1D0 !important}
+    }
+  </style>
+  <link rel="stylesheet" href="{% static 'css/print.css' %}">
+</head>
+<body>
+  <div class="no-print-bar no-print">
+    <a href="javascript:window.history.back();" class="btn-back">← Retour</a>
+    {% if is_admin and extensions %}
+      <div style="display:flex;align-items:center;gap:8px">
+        <label for="ext-select" style="font-size:9pt;font-weight:600;color:#555">Extension :</label>
+        <select id="ext-select" onchange="location.href='?extension=' + this.value" style="font-size:9pt;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:#fff">
+          <option value="">Toutes (Consolidé USD)</option>
+          {% for ext in extensions %}
+            <option value="{{ ext.id }}" {% if extension.id == ext.id %}selected{% endif %}>{{ ext.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <button class="btn-print" onclick="window.print()">Imprimer</button>
+  </div>
+
+  <div class="a4-page">
+
+    <!-- En-tête -->
+    <div class="doc-header">
+      <div class="logo-wrap">
+        {% include "includes/brand_symbol.html" %}
+      </div>
+      <h1>{% if is_consolidated %}Emerge In Christ (Consolidé USD){% elif extension %}{{ extension.name }}{% else %}Emerge In Christ{% endif %}</h1>
+      <h2>Rapport Mensuel</h2>
+      <div class="doc-date">{{ month_name }} {{ year }}</div>
+    </div>
+
+    <!-- KPIs récapitulatifs -->
+    {% with sym=currency_symbol %}
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Cultes</div>
+        <div class="kpi-value">{{ totals.total_cultes }}</div>
+        <div class="kpi-sub">ce mois</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Présence</div>
+        <div class="kpi-value">{{ totals.total_presence }}</div>
+        <div class="kpi-sub">fidèles</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Offrandes</div>
+        <div class="kpi-value" style="font-size:10pt">{{ sym }} {{ totals.total_offrandes|floatformat:2 }}</div>
+        <div class="kpi-sub">brut</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dîmes</div>
+        <div class="kpi-value" style="font-size:10pt">{{ sym }} {{ totals.total_dimes|floatformat:2 }}</div>
+        <div class="kpi-sub">transmises</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dépenses</div>
+        <div class="kpi-value" style="font-size:10pt;color:#c0392b">{{ sym }} {{ totals.total_depenses|floatformat:2 }}</div>
+        <div class="kpi-sub">local</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Recettes supp.</div>
+        <div class="kpi-value" style="font-size:10pt;color:#1a7a4a">{{ sym }} {{ totals.total_extras|floatformat:2 }}</div>
+        <div class="kpi-sub">hors-culte</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dépenses supp.</div>
+        <div class="kpi-value" style="font-size:10pt;color:#c0392b">{{ sym }} {{ totals.total_extra_expenses|floatformat:2 }}</div>
+        <div class="kpi-sub">hors-culte</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Reste Final</div>
+        <div class="kpi-value" style="font-size:10pt;color:{% if totals.total_reste >= 0 %}#1a7a4a{% else %}#c0392b{% endif %}">
+          {{ sym }} {{ totals.total_reste|floatformat:2 }}
+        </div>
+        <div class="kpi-sub">solde</div>
+      </div>
+    </div>
+
+    <!-- Tableau des cultes du mois -->
+    <div class="section-title">Détail des Cultes du Mois</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;width:80px">Date</th>
+          <th style="text-align:left">Type</th>
+          <th style="text-align:left">Prédicateur</th>
+          <th>Présence</th>
+          <th>Offrandes ({{ sym }})</th>
+          <th>Dîmes ({{ sym }})</th>
+          <th>Social ({{ sym }})</th>
+          <th>Dépenses ({{ sym }})</th>
+          <th>Reste ({{ sym }})</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td>{{ r.service_date|date:"d/m/Y" }}</td>
+          <td>{{ r.get_service_type_display }}</td>
+          <td>{{ r.preacher|default:"—" }}</td>
+          <td class="center">{{ r.total_attendance }}</td>
+          <td class="num">{{ r.total_offerings_disp|floatformat:2 }}</td>
+          <td class="num">{{ r.tithe_deduction_disp|floatformat:2 }}</td>
+          <td class="num">{{ r.social_deduction_disp|floatformat:2 }}</td>
+          <td class="num">{{ r.total_expenses_disp|floatformat:2 }}</td>
+          <td class="num {% if r.net_balance_disp >= 0 %}positive{% else %}negative{% endif %}">{{ r.net_balance_disp|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="text-align:center;color:#999;font-style:italic;padding:16px">Aucun culte enregistré pour ce mois</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">TOTAL CULTES MENSUELS</td>
+          <td style="text-align:center">{{ totals.total_presence }}</td>
+          <td>{{ totals.total_offrandes|floatformat:2 }}</td>
+          <td>{{ totals.total_dimes|floatformat:2 }}</td>
+          <td>{{ totals.total_social|floatformat:2 }}</td>
+          <td>{{ totals.total_depenses|floatformat:2 }}</td>
+          <td class="{% if totals.total_reste_culte >= 0 %}positive{% else %}negative{% endif %}">{{ totals.total_reste_culte|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Tableau des transactions hors-culte (Extras) -->
+    {% if extras_income or extras_expense %}
+    <div class="section-title" style="margin-top:16px">Transactions Hors-Culte (Extras)</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;width:90px">Date</th>
+          <th style="text-align:left;width:90px">Type</th>
+          {% if is_consolidated %}<th style="text-align:left;width:120px">Extension</th>{% endif %}
+          <th style="text-align:left">Description / Motif</th>
+          <th style="width:120px">Montant ({{ sym }})</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ei in extras_income %}
+        <tr>
+          <td>{{ ei.date|date:"d/m/Y" }}</td>
+          <td><span style="color:#1a7a4a;font-weight:600">Recette</span></td>
+          {% if is_consolidated %}<td>{{ ei.extension }}</td>{% endif %}
+          <td>{{ ei.description }}</td>
+          <td class="num positive">{{ ei.amount|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        {% for ee in extras_expense %}
+        <tr>
+          <td>{{ ee.date|date:"d/m/Y" }}</td>
+          <td><span style="color:#c0392b;font-weight:600">Dépense</span></td>
+          {% if is_consolidated %}<td>{{ ee.extension }}</td>{% endif %}
+          <td>{{ ee.description }}</td>
+          <td class="num negative">{{ ee.amount|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="{% if is_consolidated %}3{% else %}2{% endif %}">TOTAL EXTRAS HORS-CULTE</td>
+          <td class="num positive">+ {{ totals.total_extras|floatformat:2 }}</td>
+          <td class="num negative">- {{ totals.total_extra_expenses|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% endif %}
+
+    {% if show_usd and usd_totals %}
+    <div class="usd-note">
+      💵 <strong>Équivalent USD</strong> — Offrandes : $ {{ usd_totals.total_offrandes|floatformat:2 }} &nbsp;|&nbsp;
+      Dépenses : $ {{ usd_totals.total_depenses|floatformat:2 }} &nbsp;|&nbsp;
+      Solde : $ {{ usd_totals.total_reste|floatformat:2 }}
+      &nbsp;&nbsp;<small>(Taux : 1 {{ currency_code }} = {{ exchange_rate_to_usd }} USD)</small>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="sig-box">
+        <div class="sig-role">Secrétaire</div>
+        <div class="sig-name">{% if extension %}{{ extension.secretary|default:"____________________" }}{% else %}____________________{% endif %}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-role">Trésorier</div>
+        <div class="sig-name">{% if extension %}{{ extension.treasurer|default:"____________________" }}{% else %}____________________{% endif %}</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-role">Pasteur</div>
+        <div class="sig-name">{% if extension %}{{ extension.pastor_name|default:"____________________" }}{% else %}____________________{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      Rapport généré le <script>document.write(new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}))</script> — Emerge In Christ Manager
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dépenses supplémentaires - Ecclessia Manager{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+  <div>
+    <h1 class="deco-heading">Dépenses supplémentaires</h1>
+    <p class="mt-1 text-sm text-fg-muted">Gérez vos dépenses hors culte.</p>
+  </div>
+  <a class="btn-primary" href="{% url 'reports:extra_expense_create' %}">+ Nouvelle dépense</a>
+</div>
+
+<div class="deco-card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-black/[0.08] bg-black/[0.02] text-fg-muted">
+        <tr>
+          <th class="px-6 py-3 font-semibold uppercase">Date</th>
+          <th class="px-6 py-3 font-semibold uppercase">Extension</th>
+          <th class="px-6 py-3 font-semibold uppercase">Description</th>
+          <th class="px-6 py-3 font-semibold uppercase text-right">Montant</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-black/[0.05]">
+        {% for item in expenses %}
+          <tr class="hover:bg-black/[0.03]">
+            <td class="px-6 py-4 text-fg-muted">{{ item.expense_date|date:"d/m/Y" }}</td>
+            <td class="px-6 py-4 font-medium text-fg">{{ item.extension.name }}</td>
+            <td class="px-6 py-4 text-fg-muted">{{ item.description|default:"-" }}</td>
+            <td class="px-6 py-4 text-right font-semibold text-red-700">{{ item.amount }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="px-6 py-8 text-center text-fg-muted" colspan="4">Aucune dépense supplémentaire.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,85 +1,429 @@
 {% extends "base.html" %}
+{% load static %}
+{% load report_extras %}
 {% block title %}Tableau de bord - Ecclessia Manager{% endblock %}
 {% block content %}
-<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+<!-- ───── Page Header ───── -->
+<div class="dashboard-heading mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <p class="deco-kicker">I. Vue generale</p>
-    <h1 class="deco-heading mt-2">Tableau de bord</h1>
-    <p class="mt-2 text-sm text-ecclesia-muted">Vue d'ensemble des extensions, cultes, finances et rapports.</p>
+    <div class="deco-kicker">
+      <span>TABLEAU DE BORD — GESTION INTERNE</span>
+    </div>
+    <h1 class="mt-3 deco-heading">Bonjour, {{ user.first_name|default:user.username }}</h1>
+    <p class="mt-2 text-sm text-fg-muted">Retrouvez une vue d’ensemble des activités, des rapports et des finances de la communauté.</p>
   </div>
-  <a class="btn-primary" href="{% url 'reports:create' %}">Nouveau rapport</a>
+  <a class="btn-primary" href="{% url 'reports:create' %}">
+    <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Créer un rapport
+  </a>
 </div>
 
-<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Extensions</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ extension_count }}</p>
+<section class="dashboard-welcome mb-6">
+  <div class="faith-banner">
+    <div class="faith-copy">
+      <p class="faith-eyebrow">EMERGE IN CHRIST « RASSEMBLEMENT »</p>
+      <h2>Administrer avec rigueur. Servir avec excellence.</h2>
+      <p>Centralisez les rapports, coordonnez les extensions et suivez les ressources pour accompagner la mission de la communauté.</p>
+      <p class="faith-values">Amour • Unité • Consécration • Excellence</p>
+    </div>
+    <div class="faith-mark"><img src="{% static 'LOGO EMERGE WHITE.png' %}" width="1000" height="1000" alt="Logo original de la Communauté Chrétienne EMERGE IN CHRIST"></div>
   </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Rapports</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ totals.reports_count|default:0 }}</p>
-  </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Presence totale</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ totals.attendance|default:0 }}</p>
-  </div>
-  <div class="metric-card">
-    <p class="text-sm font-semibold text-ecclesia-muted">Solde net</p>
-    <p class="mt-3 text-3xl font-extrabold">{{ totals.balance|default:0 }}</p>
+  <div class="deco-card quick-actions">
+    <h2>Actions rapides</h2>
+    <div class="quick-grid">
+      <a href="{% url 'reports:create' %}"><span aria-hidden="true">＋</span>Créer un rapport</a>
+      <a href="{% url 'reports:extra_income_create' %}"><span aria-hidden="true">↗</span>Enregistrer une recette</a>
+      <a href="{% url 'reports:extra_expense_create' %}"><span aria-hidden="true">↘</span>Enregistrer une dépense</a>
+      <a href="{% url 'reports:list' %}"><span aria-hidden="true">≡</span>Consulter les rapports</a>
+    </div>
   </div>
 </section>
 
-<div class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-  <section class="deco-panel">
-    <div class="border-b border-ecclesia-gold/20 px-5 py-4">
-      <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Rapports recents</h2>
+<!-- ───── KPI Cards ───── -->
+<div class="dashboard-scope mb-4 text-sm text-fg-muted">
+  <p><strong>Période des rapports et des finances :</strong> {% if period_start %}du {{ period_start|date:"d/m/Y" }} au {{ period_end|date:"d/m/Y" }} — tout l’historique accessible{% else %}aucun rapport enregistré{% endif %}.</p>
+  <p>Extensions : état actuel. {% if is_admin %}Périmètre : toutes les extensions.{% else %}Périmètre : votre extension.{% endif %}</p>
+</div>
+<section class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+  <!-- Extensions -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Extensions actives</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ extension_count }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20 text-accent-bright group-hover:bg-accent/20 transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
     </div>
-    <div class="overflow-x-auto">
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-emerald-400"></div>
+      <p class="text-xs text-fg-muted">Extensions en activité</p>
+    </div>
+  </div>
+
+  <!-- Rapports -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Rapports transmis</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ totals.reports_count|default:0 }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-accent/10 group-hover:text-accent-bright group-hover:border-accent/20 transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-accent-bright"></div>
+      <p class="text-xs text-fg-muted">Rapports transmis sur la période</p>
+    </div>
+  </div>
+
+  <!-- Présence -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Participations cumulées</p>
+        <p class="mt-3 text-4xl font-bold tracking-tight text-fg">{{ totals.attendance|default:0 }}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/[0.05] border border-black/10 text-fg-muted group-hover:bg-accent/10 group-hover:text-accent-bright group-hover:border-accent/20 transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-bronze"></div>
+      <p class="text-xs text-fg-muted">Présences enregistrées sur la période</p>
+    </div>
+  </div>
+
+  <!-- Solde Net -->
+  <div class="metric-card group">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Solde financier global</p>
+        <p class="dashboard-balance mt-3 text-4xl font-bold tracking-tight text-accent-bright">{% if financial_available %}{{ totals.balance|money_format }} <span class="currency-code">{{ display_currency.code }}</span>{% else %}Indisponible{% endif %}</p>
+      </div>
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400/10 border border-amber-400/20 text-bronze group-hover:bg-amber-400/20 transition-colors duration-300">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-2 border-t border-black/[0.06] pt-3">
+      <div class="h-1.5 w-1.5 rounded-full bg-amber-400"></div>
+      <p class="text-xs text-fg-muted">Solde consolidé</p>
+    </div>
+  </div>
+
+</section>
+
+<div class="dashboard-scope mt-4 text-sm text-fg-muted">
+  <p>Les participations comptent les présences aux rencontres : une même personne peut être comptée plusieurs fois.</p>
+  <p>Les rapports transmis correspondent aux rapports enregistrés, sans statut de validation distinct.</p>
+  <p>Le solde couvre les soldes nets des rapports ; les recettes et dépenses supplémentaires n’y sont pas incluses.</p>
+  {% if financial_available %}<p>Montants en {{ display_currency.code }}.{% if has_conversion %} Conversion selon les taux actuellement enregistrés dans le système.{% endif %}</p>
+  {% else %}<p class="text-red-700">Consolidation indisponible : une devise ou un taux de conversion nécessaire manque.</p>{% endif %}
+</div>
+<!-- ───── Charts Row ───── -->
+<section class="mt-8 grid gap-6 xl:grid-cols-3">
+
+  <!-- Chart 1 : Trend offrandes / solde (Bar) — 2/3 width -->
+  <div class="deco-card p-6 xl:col-span-2">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Évolution financière</p>
+        <h2 class="mt-1 font-display text-lg text-fg">Offrandes & Solde — 8 derniers rapports</h2>
+      </div>
+      <div class="flex items-center gap-4 text-xs font-mono text-fg-muted">
+        <span class="flex items-center gap-1.5"><span class="inline-block h-2.5 w-2.5 rounded-sm bg-accent"></span>Offrandes</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block h-2.5 w-2.5 rounded-sm bg-amber-400"></span>Solde net</span>
+      </div>
+    </div>
+    <div class="relative h-56">
+      <canvas id="chartTrend"></canvas>
+      <div id="chartTrendEmpty" class="hidden absolute inset-0 flex flex-col items-center justify-center text-fg-muted text-xs">
+        <svg class="h-8 w-8 text-black/20 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        <span>{% if financial_available %}Aucun rapport enregistré pour le graphique d’évolution.{% else %}Conversion indisponible.{% endif %}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2 : Ventilation financière (Doughnut) — 1/3 width -->
+  <div class="deco-card p-6">
+    <div class="mb-5">
+      <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Ventilation globale</p>
+      <h2 class="mt-1 font-display text-lg text-fg">Répartition financière</h2>
+    </div>
+    <div class="relative h-44 flex items-center justify-center">
+      <canvas id="chartVentilation"></canvas>
+      <div id="chartVentilationEmpty" class="hidden absolute inset-0 flex flex-col items-center justify-center text-fg-muted text-xs">
+        <svg class="h-8 w-8 text-black/20 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>
+        <span>{% if financial_available %}Aucune donnée de ventilation.{% else %}Conversion indisponible.{% endif %}</span>
+      </div>
+    </div>
+    <div class="mt-4 space-y-2 text-xs text-fg-muted">
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-accent"></span>Dîmes transmises</span>
+        <span class="font-mono font-semibold text-fg">{% if financial_available %}{{ totals.tithe|money_format }} <span class="currency-code">{{ display_currency.code }}</span>{% else %}Indisponible{% endif %}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>Fonds sociaux</span>
+        <span class="font-mono font-semibold text-fg">{% if financial_available %}{{ totals.social|money_format }} <span class="currency-code">{{ display_currency.code }}</span>{% else %}Indisponible{% endif %}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-black/20"></span>Solde disponible</span>
+        <span class="font-mono font-semibold text-accent-bright">{% if financial_available %}{{ totals.balance|money_format }} <span class="currency-code">{{ display_currency.code }}</span>{% else %}Indisponible{% endif %}</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ───── Extensions Chart + Table Row ───── -->
+<section class="mt-6 grid gap-6 xl:grid-cols-3">
+
+  <!-- Chart 3 : Présence par extension (Doughnut) -->
+  <div class="deco-card p-6">
+    <div class="mb-5">
+      <p class="text-xs font-mono uppercase tracking-wider text-fg-muted">Présence par site</p>
+      <h2 class="mt-1 font-display text-lg text-fg">Répartition des participations</h2>
+    </div>
+    <div class="relative h-44 flex items-center justify-center">
+      <canvas id="chartExtAttendance"></canvas>
+      <div id="chartExtAttendanceEmpty" class="hidden absolute inset-0 flex flex-col items-center justify-center text-fg-muted text-xs">
+        <svg class="h-8 w-8 text-black/20 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>Aucune donnée de présence par site.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Reports Table — 2/3 width -->
+  <div class="deco-panel xl:col-span-2 flex flex-col">
+    <div class="border-b border-black/[0.06] px-6 py-4 flex items-center justify-between">
+      <h2 class="font-display text-lg tracking-wide text-fg">Rapports récents</h2>
+      <a href="{% url 'reports:list' %}" class="deco-action text-xs">Tout voir</a>
+    </div>
+    <div class="overflow-x-auto flex-1">
       <table class="deco-table">
         <thead>
           <tr>
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3">Extension</th>
-            <th class="px-4 py-3">Presence</th>
-            <th class="px-4 py-3">Offrandes</th>
-            <th class="px-4 py-3"></th>
+            <th class="px-6 py-4">Date</th>
+            <th class="px-6 py-4">Extension</th>
+            <th class="px-6 py-4">Présence</th>
+            <th class="px-6 py-4">Offrandes</th>
+            <th class="px-6 py-4">Solde</th>
+            <th class="px-6 py-4"></th>
           </tr>
         </thead>
         <tbody>
           {% for report in recent_reports %}
             <tr>
-              <td class="px-4 py-3 font-medium">{{ report.service_date }}</td>
-              <td class="px-4 py-3">{{ report.extension.name }}</td>
-              <td class="px-4 py-3">{{ report.total_attendance }}</td>
-              <td class="px-4 py-3">{{ report.total_offerings }}</td>
-              <td class="px-4 py-3 text-right"><a class="deco-action" href="{% url 'reports:detail' report.pk %}">Voir</a></td>
+              <td class="px-6 py-4 font-mono text-xs text-fg-muted whitespace-nowrap">{{ report.service_date }}</td>
+              <td class="px-6 py-4 font-semibold text-fg whitespace-nowrap">{{ report.extension.name }}</td>
+              <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_attendance }}</td>
+              <td class="px-6 py-4 font-mono text-fg-muted whitespace-nowrap">{% if financial_available %}{{ report.dashboard_offerings|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</td>
+              <td class="px-6 py-4 font-mono font-semibold whitespace-nowrap {% if report.net_balance >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">{% if financial_available %}{{ report.dashboard_balance|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</td>
+              <td class="px-6 py-4 text-right whitespace-nowrap">
+                <a class="deco-action" href="{% url 'reports:detail' report.pk %}">Voir</a>
+              </td>
             </tr>
           {% empty %}
-            <tr><td class="px-4 py-6 text-ecclesia-muted" colspan="5">Aucun rapport pour le moment.</td></tr>
+            <tr>
+              <td class="px-6 py-10 text-center text-sm text-fg-muted" colspan="6">
+                Aucun rapport pour le moment.
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </section>
+  </div>
 
-  <section class="deco-panel p-5">
-    <h2 class="font-display uppercase tracking-[0.2em] text-ecclesia-gold">Synthese par extension</h2>
-    <div class="mt-4 space-y-3">
+</section>
+
+<!-- ───── Extension Breakdown ───── -->
+{% if by_extension %}
+<section class="mt-6">
+  <div class="deco-panel p-6">
+    <div class="border-b border-black/[0.06] pb-4 mb-6 flex items-center justify-between">
+      <h2 class="font-display text-lg tracking-wide text-fg">Synthèse par extension</h2>
+      <span class="rounded-full bg-black/[0.03] border border-black/[0.06] px-3 py-1 font-mono text-xs tracking-wide text-fg-muted">Statistiques</span>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {% for row in by_extension %}
         <div class="deco-mini-panel">
-          <div class="flex items-center justify-between gap-3">
-            <p class="font-semibold">{{ row.extension__name }}</p>
-            <p class="text-sm text-ecclesia-muted">{{ row.count }} rapport(s)</p>
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-semibold text-fg text-sm leading-tight">{{ row.extension__name }}</p>
+            <span class="shrink-0 rounded-full bg-accent/10 border border-accent/20 px-2 py-0.5 font-mono text-[9px] text-accent-bright font-semibold">{{ row.count }} rapport{{ row.count|pluralize }}</span>
           </div>
-          <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-            <p>Presence: <span class="font-semibold">{{ row.attendance|default:0 }}</span></p>
-            <p>Offrandes: <span class="font-semibold">{{ row.total|default:0 }}</span></p>
+          <div class="mt-4 grid grid-cols-2 gap-3 border-t border-black/[0.06] pt-3">
+            <div>
+              <p class="text-[9px] font-mono uppercase tracking-wider text-fg-muted">Présence</p>
+              <p class="mt-0.5 text-sm font-bold text-fg">{{ row.attendance|default:0 }}</p>
+            </div>
+            <div>
+              <p class="text-[9px] font-mono uppercase tracking-wider text-fg-muted">Offrandes</p>
+              <p class="mt-0.5 text-sm font-bold font-mono text-bronze">{% if financial_available %}{{ row.total|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</p>
+            </div>
           </div>
         </div>
-      {% empty %}
-        <p class="mt-4 text-sm text-ecclesia-muted">Les indicateurs apparaitront apres les premiers rapports.</p>
       {% endfor %}
     </div>
-  </section>
-</div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ───── Chart.js ───── -->
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  const RED   = '#C90800';
+  const GOLD  = '#FFD84D';
+  const NAVY  = '#9A642E';
+  const SLATE = '#0A0A0A';
+  const base  = { font: { family: "'JetBrains Mono', monospace", size: 11 }, color: '#625D58' };
+
+  Chart.defaults.font = base.font;
+  Chart.defaults.color = base.color;
+
+  // ── 1. Trend bar chart ────────────────────────────────────────────────
+  const currencyCode = '{{ display_currency.code|escapejs }}';
+  const trendLabels    = {{ chart_trend_labels|safe }};
+  const trendOfferings = {{ chart_trend_offerings|safe }};
+  const trendBalances  = {{ chart_trend_balances|safe }};
+
+  const trendCanvas = document.getElementById('chartTrend');
+  const trendEmpty  = document.getElementById('chartTrendEmpty');
+
+  if (!trendLabels || trendLabels.length === 0) {
+    if (trendCanvas) trendCanvas.classList.add('hidden');
+    if (trendEmpty) trendEmpty.classList.remove('hidden');
+  } else {
+    new Chart(trendCanvas, {
+      type: 'bar',
+      data: {
+        labels: trendLabels,
+        datasets: [
+          {
+            label: 'Offrandes',
+            data: trendOfferings,
+            backgroundColor: RED + 'CC',
+            borderColor: RED,
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false,
+          },
+          {
+            label: 'Solde net',
+            data: trendBalances,
+            backgroundColor: GOLD + 'CC',
+            borderColor: GOLD,
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${currencyCode}`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(10,10,10,0.08)' }, border: { dash: [4, 4] } },
+          y: { grid: { color: 'rgba(10,10,10,0.08)' }, border: { dash: [4, 4] }, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // ── 2. Ventilation doughnut ────────────────────────────────────────────
+  const ventData = {{ chart_ventilation|safe }};
+  const ventCanvas = document.getElementById('chartVentilation');
+  const ventEmpty  = document.getElementById('chartVentilationEmpty');
+
+  const ventTotal = (ventData || []).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
+  if (!ventData || ventTotal <= 0) {
+    if (ventCanvas) ventCanvas.classList.add('hidden');
+    if (ventEmpty) ventEmpty.classList.remove('hidden');
+  } else {
+    new Chart(ventCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Dîmes', 'Social', 'Solde'],
+        datasets: [{ data: ventData, backgroundColor: [RED, GOLD, SLATE], borderWidth: 0, hoverOffset: 6 }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${Number(ctx.parsed).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${currencyCode}`
+            }
+          }
+        },
+      },
+    });
+  }
+
+  // ── 3. Extension attendance doughnut ───────────────────────────────────
+  const extLabels     = {{ chart_ext_labels|safe }};
+  const extAttendance = {{ chart_ext_attendance|safe }};
+  const extColors = [RED, GOLD, NAVY, SLATE, '#A30700', '#FFECA0', '#6A421E', '#DDD6CE'];
+
+  const extCanvas = document.getElementById('chartExtAttendance');
+  const extEmpty  = document.getElementById('chartExtAttendanceEmpty');
+
+  const extTotal = (extAttendance || []).reduce((acc, v) => acc + (parseInt(v) || 0), 0);
+  if (!extAttendance || extAttendance.length === 0 || extTotal <= 0) {
+    if (extCanvas) extCanvas.classList.add('hidden');
+    if (extEmpty) extEmpty.classList.remove('hidden');
+  } else {
+    new Chart(extCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: extLabels,
+        datasets: [{ data: extAttendance, backgroundColor: extColors.slice(0, extAttendance.length), borderWidth: 0, hoverOffset: 6 }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { boxWidth: 10, padding: 10, font: { size: 10 } },
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed} participations`
+            }
+          }
+        },
+      },
+    });
+  }
+})();
+</script>
 {% endblock %}
