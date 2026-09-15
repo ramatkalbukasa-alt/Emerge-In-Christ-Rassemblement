@@ -60,3 +60,4 @@ Render execute:
 pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput
 python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
 ```
+# ECCLESIA-MANAGER
