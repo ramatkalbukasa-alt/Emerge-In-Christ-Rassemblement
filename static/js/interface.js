@@ -1,5 +1,8 @@
 // Keep keyboard focus inside an open dialog or mobile navigation.
 document.addEventListener('alpine:init', () => {
+  document.querySelectorAll('#app-sidebar nav a').forEach(link => {
+    if (link.pathname === window.location.pathname) link.setAttribute('aria-current', 'page');
+  });
   const focusable = element => [...element.querySelectorAll('a[href], button, input, select, textarea, [tabindex="0"]')]
     .filter(node => !node.disabled && node.getClientRects().length && !node.closest('[inert]'));
   document.querySelectorAll('[role="dialog"], #app-sidebar').forEach(panel => {
@@ -17,6 +20,11 @@ document.addEventListener('alpine:init', () => {
         previousFocus?.focus();
       }
       wasOpen = open;
+      const modalOpen = [...document.querySelectorAll('[role="dialog"]')]
+        .some(dialog => getComputedStyle(dialog).display !== 'none');
+      const sidebar = document.getElementById('app-sidebar');
+      const menuOpen = sidebar && window.innerWidth < 1024 && !sidebar.inert;
+      document.body.style.overflow = modalOpen || menuOpen ? 'hidden' : '';
     });
     observer.observe(panel, { attributes: true, attributeFilter: ['style', 'class', 'inert'] });
     panel.addEventListener('keydown', event => {

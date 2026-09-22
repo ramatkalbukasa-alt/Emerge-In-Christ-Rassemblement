@@ -20,7 +20,8 @@ class CurrencyAdmin(admin.ModelAdmin):
             ),
         }),
     )
-    readonly_fields = ("code",)  # Le code ne devrait pas être modifié après création
+    def get_readonly_fields(self, request, obj=None):
+        return ("code",) if obj else ()
 
 
 @admin.register(ChurchExtension)
@@ -57,4 +58,3 @@ class ChurchExtensionAdmin(admin.ModelAdmin):
 @admin.register(AppSetting)
 class AppSettingAdmin(admin.ModelAdmin):
     list_display = ("church_name", "social_percentage", "updated_at")
-

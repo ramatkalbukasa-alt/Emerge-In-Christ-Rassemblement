@@ -3,7 +3,9 @@ from apps.accounts.models import UserProfile
 
 def user_is_admin(user):
     profile = getattr(user, "profile", None)
-    return bool(profile and profile.role == UserProfile.Role.ADMIN)
+    return bool(user and user.is_authenticated and user.is_active and (
+        user.is_superuser or (profile and profile.role == UserProfile.Role.ADMIN)
+    ))
 
 
 def user_extension(user):

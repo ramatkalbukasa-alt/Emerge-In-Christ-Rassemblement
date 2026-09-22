@@ -4,10 +4,22 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Min, Sum
 from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
+from django.contrib import admin
 
 from apps.churches.models import ChurchExtension, Currency
 from apps.churches.currency_service import convert_currency
 from apps.reports.permissions import reports_for_user, user_extension, user_is_admin
+
+
+@login_required
+def administration(request):
+    if not (user_is_admin(request.user) or request.user.is_staff):
+        raise PermissionDenied
+    return render(request, "dashboard/administration.html", {
+        "admin_apps": admin.site.get_app_list(request) if request.user.is_staff else [],
+        "is_admin": user_is_admin(request.user),
+    })
 
 
 @login_required

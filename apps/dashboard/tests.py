@@ -88,5 +88,60 @@ class DashboardScopeTests(TestCase):
         self.assertIsNone(response.context["period_start"])
         self.assertContains(response, "aucun rapport enregistré")
 
+    def test_administration_rejects_extension_account(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse("dashboard:administration")).status_code, 403)
+
+    def test_application_admin_has_management_without_staff_escalation(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse("dashboard:administration"))
+        self.assertContains(response, reverse("churches:list"))
+        self.assertNotContains(response, reverse("admin:auth_user_changelist"))
+        self.admin.refresh_from_db()
+        self.assertFalse(self.admin.is_staff)
+
+    def test_superuser_without_profile_has_full_management(self):
+        user = User.objects.create_superuser(username="super-admin", password="test-only")
+        self.client.force_login(user)
+        response = self.client.get(reverse("dashboard:administration"))
+        self.assertContains(response, reverse("admin:auth_user_changelist"))
+        self.assertContains(response, reverse("admin:churches_currency_changelist"))
+        self.assertEqual(self.client.get(reverse("churches:list")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("dashboard:home")).context["totals"]["reports_count"], 2)
+
+    def test_staff_only_sees_permitted_models(self):
+        from django.contrib.auth.models import Permission
+        user = User.objects.create_user(username="staff-limited", is_staff=True)
+        user.user_permissions.add(Permission.objects.get(codename="view_currency"))
+        self.client.force_login(user)
+        response = self.client.get(reverse("dashboard:administration"))
+        self.assertContains(response, reverse("admin:churches_currency_changelist"))
+        self.assertNotContains(response, reverse("admin:auth_user_changelist"))
+        self.assertNotContains(response, reverse("churches:list"))
+
+    def test_currency_code_is_editable_only_on_creation(self):
+        from django.contrib.admin.sites import site
+        from django.test import RequestFactory
+        model_admin = site._registry[Currency]
+        request = RequestFactory().get("/admin/")
+        self.assertNotIn("code", model_admin.get_readonly_fields(request))
+        self.assertIn("code", model_admin.get_readonly_fields(request, self.usd))
+
+    def test_interface_routes_render_for_admin(self):
+        self.client.force_login(self.admin)
+        routes = [
+            ("reports:list", []), ("reports:create", []),
+            ("reports:detail", [self.first.pk]), ("reports:print", [self.first.pk]),
+            ("reports:extra_income_list", []), ("reports:extra_income_create", []),
+            ("reports:extra_expense_list", []), ("reports:extra_expense_create", []),
+            ("reports:monthly_print", [2026, 1]), ("reports:quarterly_print", [2026, 1]),
+            ("reports:annual_print", [2026]), ("reports:export", ["html"]),
+            ("churches:list", []), ("churches:create", []),
+            ("churches:update", [self.local.slug]), ("notifications:list", []),
+        ]
+        for name, args in routes:
+            with self.subTest(route=name):
+                self.assertEqual(self.client.get(reverse(name, args=args)).status_code, 200)
+
     def test_anonymous_dashboard_requires_login(self):
         self.assertRedirects(self.client.get(reverse("dashboard:home")), "/login/?next=/")

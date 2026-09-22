@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from apps.accounts.models import UserProfile
+from apps.reports.permissions import user_is_admin
 
 from .forms import ChurchExtensionForm
 from .models import ChurchExtension
@@ -10,8 +10,7 @@ from .models import ChurchExtension
 def admin_required(view_func):
     @login_required
     def wrapper(request, *args, **kwargs):
-        profile = getattr(request.user, "profile", None)
-        if not profile or profile.role != UserProfile.Role.ADMIN:
+        if not user_is_admin(request.user):
             return redirect("dashboard:home")
         return view_func(request, *args, **kwargs)
 

@@ -21,6 +21,9 @@
   </a>
 </div>
 
+{% if user|application_admin or user.is_staff %}
+<a class="admin-entry mb-6" href="{% url 'dashboard:administration' %}"><span><strong>Espace administration</strong><span>Extensions, paramètres et outils de gestion</span></span><span aria-hidden="true">→</span></a>
+{% endif %}
 <section class="dashboard-welcome mb-6">
   <div class="faith-banner">
     <div class="faith-copy">
@@ -132,7 +135,8 @@
   <p>Les rapports transmis correspondent aux rapports enregistrés, sans statut de validation distinct.</p>
   <p>Le solde couvre les soldes nets des rapports ; les recettes et dépenses supplémentaires n’y sont pas incluses.</p>
   {% if financial_available %}<p>Montants en {{ display_currency.code }}.{% if has_conversion %} Conversion selon les taux actuellement enregistrés dans le système.{% endif %}</p>
-  {% else %}<p class="text-red-700">Consolidation indisponible : une devise ou un taux de conversion nécessaire manque.</p>{% endif %}
+  {% else %}<p class="text-red-700">Consolidation indisponible : une devise ou un taux de conversion nécessaire manque.</p>
+  {% if user|application_admin or user.is_staff %}<a class="deco-action" href="{% url 'dashboard:administration' %}">Vérifier la configuration</a>{% else %}<p>Contactez votre administrateur pour vérifier la devise de votre extension.</p>{% endif %}{% endif %}
 </div>
 <!-- ───── Charts Row ───── -->
 <section class="mt-8 grid gap-6 xl:grid-cols-3">
@@ -217,12 +221,12 @@
       <table class="deco-table">
         <thead>
           <tr>
-            <th class="px-6 py-4">Date</th>
-            <th class="px-6 py-4">Extension</th>
-            <th class="px-6 py-4">Présence</th>
-            <th class="px-6 py-4">Offrandes</th>
-            <th class="px-6 py-4">Solde</th>
-            <th class="px-6 py-4"></th>
+            <th scope="col" class="px-6 py-4">Date</th>
+            <th scope="col" class="px-6 py-4">Extension</th>
+            <th scope="col" class="px-6 py-4">Présence</th>
+            <th scope="col" class="px-6 py-4">Offrandes</th>
+            <th scope="col" class="px-6 py-4">Solde</th>
+            <th scope="col" class="px-6 py-4"></th>
           </tr>
         </thead>
         <tbody>

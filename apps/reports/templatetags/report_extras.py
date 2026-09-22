@@ -4,6 +4,12 @@ from django import template
 register = template.Library()
 
 
+@register.filter
+def application_admin(user):
+    from apps.reports.permissions import user_is_admin
+    return user_is_admin(user)
+
+
 @register.filter(name="money_format")
 def money_format(value):
     """

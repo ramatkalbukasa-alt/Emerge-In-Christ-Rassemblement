@@ -11,6 +11,13 @@
 .admin-brand { display:flex; gap:12px; align-items:center; }
 .admin-brand img { object-fit:contain; }
 .admin-brand small { display:block; margin-top:4px; color:#FFFFFF; font-size:12px; }
+#header { gap:16px; }
+#content { max-width:1600px; }
+.module { border-radius:8px; overflow:hidden; }
+input, select, textarea { max-width:100%; }
+.submit-row input, .button, a.button { min-height:44px; box-sizing:border-box; }
+:focus-visible { outline:3px solid #9A642E; outline-offset:3px; }
+@media (max-width:767px) { #header { padding:16px; } #content { padding:20px 16px; } .admin-brand { font-size:18px; } .form-row .flex-container { flex-wrap:wrap; } }
 html[data-theme="dark"] { --link-fg:#FFD84D; --link-selected-fg:#FFFFFF; }
 </style>
 {% endblock %}

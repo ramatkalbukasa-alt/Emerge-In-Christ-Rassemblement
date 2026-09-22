@@ -38,7 +38,7 @@
 
     <!-- Sidebar -->
     {% if user.is_authenticated %}
-      <aside id="app-sidebar" :inert="!sidebarOpen &amp;&amp; !desktop" aria-label="Menu principal" @keydown.escape.window="sidebarOpen = false" class="app-sidebar fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-white/[0.06] bg-[#0a0a0c]/95 backdrop-blur-xl text-fg transition-transform lg:static lg:translate-x-0 flex flex-col justify-between"
+      <aside id="app-sidebar" :inert="!sidebarOpen &amp;&amp; !desktop" aria-label="Menu principal" @keydown.escape.window="sidebarOpen = false" class="app-sidebar fixed inset-y-0 left-0 z-40 -translate-x-full border-r border-white/[0.06] bg-[#0a0a0c]/95 backdrop-blur-xl text-fg transition-transform lg:translate-x-0 flex flex-col justify-between"
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
 
         <div>
@@ -54,6 +54,9 @@
 
           <!-- Navigation Links -->
           <nav class="space-y-6 px-4 py-6 text-sm">
+            {% if user.is_staff and not user|application_admin %}
+            <a class="admin-nav-link" href="{% url 'dashboard:administration' %}">Administration</a>
+            {% endif %}
             <div>
               <p class="px-3 pb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-muted">Général</p>
               <div class="space-y-1.5">
@@ -92,7 +95,7 @@
                   Dépenses supp.
                 </a>
 
-                {% if user.profile.role == "admin" %}
+                {% if user|application_admin %}
                   {% url 'churches:list' as churches_list_url %}
                   <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 {% if request.path|startswith:'/extensions/' %}bg-accent text-white font-semibold rounded-lg{% else %}text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg{% endif %}"
                      href="{{ churches_list_url }}">
@@ -101,9 +104,9 @@
                   </a>
 
                   <a class="flex items-center gap-3 px-4 py-3 font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-accent/50 text-fg-muted hover:bg-white/[0.05] hover:text-fg rounded-lg"
-                     href="/admin/" target="_blank" rel="noopener noreferrer">
+                     href="{% url 'dashboard:administration' %}">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Admin Django
+                    Administration
                   </a>
                 {% endif %}
               </div>
@@ -181,20 +184,20 @@
               <label class="block mb-2">Périodicité</label>
               <div class="grid grid-cols-3 gap-2">
                 <button type="button"
-                        @click="pType = 'monthly'"
-                        :class="pType === 'monthly' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        @click="pType = 'monthly'" :aria-pressed="pType === 'monthly'"
+                        :class="pType === 'monthly' ? 'border-accent bg-accent/10 text-accent font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
                         class="h-10 rounded-lg border text-xs transition-colors">
                   Mensuel
                 </button>
                 <button type="button"
-                        @click="pType = 'quarterly'"
-                        :class="pType === 'quarterly' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        @click="pType = 'quarterly'" :aria-pressed="pType === 'quarterly'"
+                        :class="pType === 'quarterly' ? 'border-accent bg-accent/10 text-accent font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
                         class="h-10 rounded-lg border text-xs transition-colors">
                   Trimestriel
                 </button>
                 <button type="button"
-                        @click="pType = 'annual'"
-                        :class="pType === 'annual' ? 'border-accent bg-accent/20 text-white font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
+                        @click="pType = 'annual'" :aria-pressed="pType === 'annual'"
+                        :class="pType === 'annual' ? 'border-accent bg-accent/10 text-accent font-semibold' : 'border-white/10 bg-white/[0.03] text-fg-muted hover:bg-white/[0.06]'"
                         class="h-10 rounded-lg border text-xs transition-colors">
                   Annuel
                 </button>
@@ -277,7 +280,7 @@
 
           <div>
             <p class="text-sm font-semibold text-fg">{{ user.get_full_name|default:user.username }}</p>
-            <p class="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-accent-bright">{{ user.profile.get_role_display }}</p>
+            <p class="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-accent-bright">{% if user.is_superuser %}Administrateur{% else %}{{ user.profile.get_role_display|default:'Compte équipe' }}{% endif %}</p>
           </div>
 
           <!-- Actions droite : cloche + déconnexion -->
@@ -286,7 +289,7 @@
             <!-- Cloche de notifications -->
             <div x-data="{ open: false }" class="relative">
               <button @click="open = !open" @click.away="open = false"
-                      class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-fg-muted hover:bg-white/[0.05] hover:text-fg focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
+                      class="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-fg-muted hover:bg-white/[0.05] hover:text-fg focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
                       aria-label="Notifications" :aria-expanded="open" @keydown.escape.window="open = false">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -305,7 +308,7 @@
                 <div class="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
                   <span class="text-sm font-semibold text-fg">Notifications</span>
                   {% if notif_unread_count > 0 %}
-                    <a href="{% url 'notifications:mark_all_read' %}" class="text-xs text-accent-bright hover:text-white hover:underline font-medium">Tout marquer lu</a>
+                    <a href="{% url 'notifications:mark_all_read' %}" class="text-xs text-accent-bright hover:text-accent hover:underline font-medium">Tout marquer lu</a>
                   {% endif %}
                 </div>
                 <div class="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
@@ -324,7 +327,7 @@
                   {% endfor %}
                 </div>
                 <div class="border-t border-white/[0.06] px-4 py-2.5">
-                  <a href="{% url 'notifications:list' %}" class="text-xs text-accent-bright hover:text-white hover:underline font-medium">Voir toutes les notifications →</a>
+                  <a href="{% url 'notifications:list' %}" class="text-xs text-accent-bright hover:text-accent hover:underline font-medium">Voir toutes les notifications →</a>
                 </div>
               </div>
             </div>

@@ -39,17 +39,17 @@
 
 <!-- ───── Table Panel ───── -->
 <section class="deco-panel overflow-hidden">
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Tableau défilant">
     <table class="deco-table">
       <thead>
         <tr>
-          <th class="px-6 py-4">Date du culte</th>
-          <th class="px-6 py-4">Extension</th>
-          <th class="px-6 py-4">Type de culte</th>
-          <th class="px-6 py-4">Présence</th>
-          <th class="px-6 py-4">Offrandes brutes</th>
-          <th class="px-6 py-4">Solde disponible</th>
-          <th class="px-6 py-4"></th>
+          <th scope="col" class="px-6 py-4">Date du culte</th>
+          <th scope="col" class="px-6 py-4">Extension</th>
+          <th scope="col" class="px-6 py-4">Type de culte</th>
+          <th scope="col" class="px-6 py-4">Présence</th>
+          <th scope="col" class="px-6 py-4">Offrandes brutes</th>
+          <th scope="col" class="px-6 py-4">Solde disponible</th>
+          <th scope="col" class="px-6 py-4"></th>
         </tr>
       </thead>
       <tbody>
@@ -63,7 +63,7 @@
                   Culte Dominical
                 </span>
               {% elif report.service_type == 'week' %}
-                <span class="inline-flex items-center rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-semibold text-purple-300">
+                <span class="inline-flex items-center rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-semibold text-purple-700">
                   Culte Semaine
                 </span>
               {% else %}

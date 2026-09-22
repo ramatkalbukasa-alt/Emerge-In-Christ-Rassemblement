@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Administration - Ecclessia Manager{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <p class="deco-kicker">Pilotage de la communauté</p>
+  <h1 class="deco-heading mt-2">Administration</h1>
+  <p class="mt-3 text-sm text-fg-muted">Retrouvez vos outils de gestion et les paramètres accessibles à votre compte.</p>
+</div>
+{% if is_admin %}
+<section class="deco-card p-6 mb-6" aria-labelledby="management-title">
+  <h2 id="management-title" class="text-lg font-semibold">Gestion quotidienne</h2>
+  <div class="admin-grid mt-4">
+    <a class="admin-tile" href="{% url 'churches:list' %}"><strong>Extensions</strong><span>Coordonnées, responsables, devises et prélèvements.</span></a>
+    <a class="admin-tile" href="{% url 'reports:list' %}"><strong>Rapports et exports</strong><span>Consulter les cultes et exporter le registre.</span></a>
+    <a class="admin-tile" href="{% url 'reports:extra_income_list' %}"><strong>Recettes supplémentaires</strong><span>Suivre les ressources de la communauté.</span></a>
+    <a class="admin-tile" href="{% url 'reports:extra_expense_list' %}"><strong>Dépenses supplémentaires</strong><span>Consulter et enregistrer les dépenses.</span></a>
+  </div>
+</section>
+{% endif %}
+{% for app in admin_apps %}
+<section class="deco-card p-6 mb-6" aria-labelledby="app-{{ app.app_label }}">
+  <h2 id="app-{{ app.app_label }}" class="text-lg font-semibold">{{ app.name }}</h2>
+  <div class="admin-grid mt-4">
+    {% for model in app.models %}
+      {% if model.admin_url %}<a class="admin-tile" href="{{ model.admin_url }}"><strong>{{ model.name }}</strong><span>{% if model.perms.change %}Consulter et gérer{% else %}Consulter{% endif %} →</span></a>
+      {% elif model.add_url %}<a class="admin-tile" href="{{ model.add_url }}"><strong>{{ model.name }}</strong><span>Ajouter →</span></a>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% empty %}
+<div class="deco-mini-panel text-sm text-fg-muted">Les paramètres avancés sont accessibles aux comptes disposant des autorisations d’administration correspondantes. Contactez le responsable des accès si vous devez gérer les utilisateurs ou les devises.</div>
+{% endfor %}
+{% endblock %}
