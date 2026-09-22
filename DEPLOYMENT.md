@@ -40,7 +40,9 @@ Fichiers du dépôt utilisés par le déploiement :
 3. Render génère automatiquement `SECRET_KEY` et relie `DATABASE_URL` /
    `REDIS_URL` aux services créés (voir `render.yaml`, blocs `fromDatabase` /
    `fromService`).
-4. Cliquez sur **Apply** — Render exécute le build puis le start command
+4. Renseignez `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL` et
+   `DJANGO_SUPERUSER_PASSWORD` avec l’identifiant, l’adresse e-mail et un mot de
+   passe fort pour votre administrateur. Cliquez sur **Apply** — Render exécute le build puis le start command
    définis dans `render.yaml` (identiques à ceux du tableau ci-dessous).
 5. Passez à la section [Post-déploiement](#post-déploiement).
 
@@ -76,7 +78,7 @@ Fichiers du dépôt utilisés par le déploiement :
    ```
 4. **Start Command** :
    ```bash
-   python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
+   python manage.py migrate --noinput && python manage.py ensure_admin && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
    ```
 5. **Variables d'environnement** (onglet *Environment*) :
 
@@ -86,6 +88,9 @@ Fichiers du dépôt utilisés par le déploiement :
    | `PYTHON_VERSION` | `3.11.9` | doit matcher `runtime.txt` |
    | `SECRET_KEY` | clé aléatoire longue | bouton **Generate** de Render, ou `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` — ne jamais committer cette valeur |
    | `DEBUG` | `False` | toujours `False` en production |
+   | `DJANGO_SUPERUSER_USERNAME` | votre identifiant administrateur | création automatique au premier démarrage |
+   | `DJANGO_SUPERUSER_EMAIL` | votre adresse e-mail | obligatoire pour la création |
+   | `DJANGO_SUPERUSER_PASSWORD` | mot de passe fort et unique | secret à saisir dans Render, jamais dans Git |
    | `ALLOWED_HOSTS` | `<votre-service>.onrender.com` | ajoutez le domaine perso séparé par une virgule si vous en configurez un |
    | `CSRF_TRUSTED_ORIGINS` | `https://<votre-service>.onrender.com` | schéma `https://` obligatoire |
    | `DATABASE_URL` | Internal Database URL (étape 1) | |
@@ -101,19 +106,30 @@ Fichiers du dépôt utilisés par le déploiement :
 
 Une fois le service en ligne (`https://<votre-service>.onrender.com`) :
 
-1. Ouvrez le **Shell** du Web Service dans le Dashboard Render (onglet
-   *Shell*) et créez un compte administrateur :
-   ```bash
-   python manage.py createsuperuser
-   ```
-2. Connectez-vous sur `/login/` avec ce compte.
-3. *(Optionnel, démo uniquement)* `python manage.py seed_demo` crée des
-   comptes de démonstration avec des mots de passe **publics** (documentés
-   dans `README.md`) — à ne jamais lancer sur une instance de production
-   réelle exposée publiquement.
+1. Le démarrage exécute automatiquement `python manage.py ensure_admin` après
+   les migrations. Le compte créé est un superutilisateur actif, avec le profil
+   applicatif Administrateur. Aucun Shell Render n’est nécessaire.
+2. Connectez-vous sur `/login/` avec l’identifiant et le mot de passe définis
+   dans les variables d’environnement. L’espace `/administration/` donne accès
+   aux outils et paramètres de gestion.
+3. N’exécutez pas `seed_demo` en production : cette commande est réservée aux
+   données de démonstration et utilise des mots de passe publics.
 4. Vérifiez `/admin/` (interface Django Admin) et la page `/rapports/` pour
    confirmer que la base de données et les fichiers statiques sont bien
    servis (styles appliqués, icônes visibles).
+
+Les redéploiements conservent le mot de passe et les permissions du compte
+existant. Un identifiant déjà utilisé par un compte ordinaire ou inactif provoque
+une erreur explicite : aucun compte n’est promu automatiquement.
+
+Sans aucune variable `DJANGO_SUPERUSER_*`, la création est ignorée. Pour une
+nouvelle création, les trois variables sont nécessaires. Après la création,
+vous pouvez retirer `DJANGO_SUPERUSER_PASSWORD` de Render en conservant le même
+identifiant ; il sera à fournir de nouveau si la base est recréée.
+
+Pour un service Render déjà configuré manuellement, mettez aussi à jour sa
+**Start Command** avec la commande ci-dessus et ajoutez les trois variables
+dans **Environment** avant de redéployer.
 
 ---
 

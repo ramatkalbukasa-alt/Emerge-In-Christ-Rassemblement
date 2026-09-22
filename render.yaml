@@ -4,8 +4,14 @@ services:
     runtime: python
     plan: free
     buildCommand: "pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput"
-    startCommand: "python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application"
+    startCommand: "python manage.py migrate --noinput && python manage.py ensure_admin && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application"
     envVars:
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
       - key: DJANGO_SETTINGS_MODULE
         value: ecclessia_manager.settings
       - key: PYTHON_VERSION

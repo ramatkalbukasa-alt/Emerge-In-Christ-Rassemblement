@@ -58,10 +58,15 @@ Render execute:
 
 ```bash
 pip install -r requirements.txt && npm install && npm run build:css && python manage.py collectstatic --noinput
-python manage.py migrate && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
+python manage.py migrate --noinput && python manage.py ensure_admin && daphne -b 0.0.0.0 -p $PORT ecclessia_manager.asgi:application
 ```
 
 Guide complet (Blueprint automatique **ou** creation manuelle des services,
 variables d'environnement, post-deploiement, securite, depannage) :
 voir **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+L’administrateur est créé automatiquement au démarrage avec les variables Render
+`DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL` et `DJANGO_SUPERUSER_PASSWORD`.
+Les redéploiements ne réinitialisent pas son mot de passe. Ne lancez pas
+`seed_demo` en production.
 # ECCLESIA-MANAGER
