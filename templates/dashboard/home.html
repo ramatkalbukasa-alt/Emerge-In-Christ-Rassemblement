@@ -217,7 +217,7 @@
       <h2 class="font-display text-lg tracking-wide text-fg">Rapports récents</h2>
       <a href="{% url 'reports:list' %}" class="deco-action text-xs">Tout voir</a>
     </div>
-    <div class="overflow-x-auto flex-1">
+    <div class="overflow-x-auto flex-1" tabindex="0" role="region" aria-label="Rapports r?cents">
       <table class="deco-table">
         <thead>
           <tr>
@@ -226,7 +226,7 @@
             <th scope="col" class="px-6 py-4">Présence</th>
             <th scope="col" class="px-6 py-4">Offrandes</th>
             <th scope="col" class="px-6 py-4">Solde</th>
-            <th scope="col" class="px-6 py-4"></th>
+            <th scope="col" class="px-6 py-4"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -289,13 +289,14 @@
 
 <!-- ───── Chart.js ───── -->
 <script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/chart-accessibility.js' %}"></script>
 <script>
 (function () {
   const RED   = '#C90800';
   const GOLD  = '#FFD84D';
   const NAVY  = '#9A642E';
   const SLATE = '#0A0A0A';
-  const base  = { font: { family: "'JetBrains Mono', monospace", size: 11 }, color: '#625D58' };
+  const base  = { font: { family: "system-ui, sans-serif", size: 12 }, color: '#625D58' };
 
   Chart.defaults.font = base.font;
   Chart.defaults.color = base.color;

@@ -1,24 +1,25 @@
 <!doctype html>
 <html lang="fr">
-<head><meta charset="utf-8"><title>Nouveau rapport — {{ extension.name }}</title>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nouveau rapport — {{ extension.name }}</title>
 <style>
   body{font-family:Arial,sans-serif;background:#f5f7fa;margin:0;padding:24px}
   .card{max-width:520px;margin:0 auto;background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}
-  .header{background:#1a3a6b;color:#fff;padding:24px 32px;text-align:center}
+  .header{background:#3E0805;color:#fff;padding:24px 32px;text-align:center}
   .header h1{font-size:16pt;margin:0 0 4px;font-weight:700}
   .header p{font-size:9pt;margin:0;opacity:.8}
   .body{padding:28px 32px}
   .kpi-row{display:flex;gap:12px;margin:16px 0}
   .kpi{flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center}
   .kpi-label{font-size:8pt;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px}
-  .kpi-value{font-size:14pt;font-weight:700;color:#1a3a6b}
+  .kpi-value{font-size:14pt;font-weight:700;color:#3E0805}
   .btn{display:inline-block;background:#B91C1C;color:#fff;text-decoration:none;padding:10px 28px;border-radius:8px;font-size:10pt;font-weight:600;margin-top:12px}
-  .footer{background:#f0f4fc;padding:16px 32px;font-size:8pt;color:#64748b;text-align:center;border-top:1px solid #e2e8f0}
+  .footer{background:#F8F6F3;padding:16px 32px;font-size:8pt;color:#64748b;text-align:center;border-top:1px solid #e2e8f0}
+@media (max-width:480px){body{padding:12px}.body,.header,.footer{padding:20px}.kpi-row{display:block}.kpi{margin-bottom:8px}}
 </style></head>
 <body>
 <div class="card">
   <div class="header">
-    <h1>📋 Nouveau rapport de culte</h1>
+    <h1>Nouveau rapport de culte</h1>
     <p>{{ site_name }}</p>
   </div>
   <div class="body">
@@ -38,7 +39,7 @@
       </div>
     </div>
     <p style="font-size:9pt;color:#64748b">Soumis par : <strong>{{ report.submitted_by.get_full_name|default:report.submitted_by.username }}</strong></p>
-    <center><a class="btn" href="{{ site_name }}">Consulter le rapport</a></center>
+    <p style="font-size:14px;color:#625d58">Connectez-vous à votre espace de gestion pour consulter ce rapport.</p>
   </div>
   <div class="footer">{{ site_name }} &bull; Rapport généré le {{ now|date:"d/m/Y à H:i" }}</div>
 </div>

@@ -8,7 +8,7 @@
   <style>
     :root{--blue:#C90800;--blue2:#9A642E;--border:#dde3ec;--bg:#f5f7fa}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1a1a2e;background:#eef1f7;padding:24px 12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#241606;background:#F7F6F4;padding:24px 12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .no-print-bar{max-width:297mm;margin:0 auto 16px;display:flex;justify-content:space-between;align-items:center}
     .btn-print{background:var(--blue);color:#fff;border:none;padding:8px 20px;font-size:9pt;font-weight:600;border-radius:6px;cursor:pointer}
     .btn-back{color:#555;text-decoration:none;font-size:9pt}
@@ -24,9 +24,9 @@
     .annual-table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-top:none;font-size:8.5pt}
     .annual-table th,.annual-table td{border:1px solid var(--border);padding:5px 8px}
     .annual-table thead th{background:var(--blue);color:#fff;font-size:8pt;text-transform:uppercase;text-align:center}
-    .annual-table .row-label{font-weight:600;color:var(--blue);background:#f0f4fc}
+    .annual-table .row-label{font-weight:600;color:var(--blue);background:#F8F6F3}
     .annual-table td.num{text-align:right;font-family:monospace}
-    .annual-table tfoot td{font-weight:700;background:#0d2d5a;color:#fff;text-align:right;font-size:9pt}
+    .annual-table tfoot td{font-weight:700;background:#3E0805;color:#fff;text-align:right;font-size:9pt}
     .annual-table tfoot td:first-child{text-align:left}
     .positive{color:#1a7a4a !important;font-weight:600}
     .negative{color:#c0392b !important;font-weight:600}
@@ -84,9 +84,9 @@
     <table class="annual-table">
       <thead>
         <tr>
-          <th style="width:170px;text-align:left">Indicateur</th>
-          {% for qd in quarter_data %}<th>{{ qd.quarter_name }}</th>{% endfor %}
-          <th style="background:#0d2d5a">TOTAL {{ year }}</th>
+          <th scope="col" style="width:170px;text-align:left">Indicateur</th>
+          {% for qd in quarter_data %}<th scope="col">{{ qd.quarter_name }}</th>{% endfor %}
+          <th scope="col" style="background:#3E0805">TOTAL {{ year }}</th>
         </tr>
       </thead>
       <tbody>
@@ -161,11 +161,11 @@
     <table class="annual-table">
       <thead>
         <tr>
-          <th style="text-align:left;width:90px">Date</th>
-          <th style="text-align:left;width:90px">Type</th>
-          {% if is_consolidated %}<th style="text-align:left;width:120px">Extension</th>{% endif %}
-          <th style="text-align:left">Description / Motif</th>
-          <th style="width:120px">Montant ({{ sym }})</th>
+          <th scope="col" style="text-align:left;width:90px">Date</th>
+          <th scope="col" style="text-align:left;width:90px">Type</th>
+          {% if is_consolidated %}<th scope="col" style="text-align:left;width:120px">Extension</th>{% endif %}
+          <th scope="col" style="text-align:left">Description / Motif</th>
+          <th scope="col" style="width:120px">Montant ({{ sym }})</th>
         </tr>
       </thead>
       <tbody>

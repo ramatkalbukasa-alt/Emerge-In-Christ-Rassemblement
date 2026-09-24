@@ -19,5 +19,11 @@ input, select, textarea { max-width:100%; }
 :focus-visible { outline:3px solid #9A642E; outline-offset:3px; }
 @media (max-width:767px) { #header { padding:16px; } #content { padding:20px 16px; } .admin-brand { font-size:18px; } .form-row .flex-container { flex-wrap:wrap; } }
 html[data-theme="dark"] { --link-fg:#FFD84D; --link-selected-fg:#FFFFFF; }
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] { --link-fg:#FFD84D; --link-selected-fg:#FFFFFF; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+}
 </style>
 {% endblock %}

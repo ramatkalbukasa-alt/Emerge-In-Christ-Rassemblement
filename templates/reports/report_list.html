@@ -49,7 +49,7 @@
           <th scope="col" class="px-6 py-4">Présence</th>
           <th scope="col" class="px-6 py-4">Offrandes brutes</th>
           <th scope="col" class="px-6 py-4">Solde disponible</th>
-          <th scope="col" class="px-6 py-4"></th>
+          <th scope="col" class="px-6 py-4"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
@@ -73,9 +73,9 @@
               {% endif %}
             </td>
             <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_attendance }}</td>
-            <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_offerings }}</td>
+            <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_offerings }} <span class="currency-code">{{ report.currency.code|default:report.extension.currency.code|default:report.extension.currency_code_legacy }}</span></td>
             <td class="px-6 py-4 font-mono font-semibold {% if report.net_balance >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">
-              {{ report.net_balance }}
+              {{ report.net_balance }} <span class="currency-code">{{ report.currency.code|default:report.extension.currency.code|default:report.extension.currency_code_legacy }}</span>
             </td>
             <td class="px-6 py-4 text-right">
               <a class="deco-action" href="{% url 'reports:detail' report.pk %}">Ouvrir</a>

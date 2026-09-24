@@ -1,4 +1,75 @@
-# Audit des interfaces — 22 septembre 2026
+# Audit des interfaces — 24 septembre 2026
+
+## Nouvelle revue et corrections
+
+Revue de tous les templates HTML et du socle CSS/JavaScript. Identité noir,
+rouge et or conservée. Les modifications préexistantes de connexion et de
+configuration ont été préservées.
+
+- **Responsive** : formulaire des conversions réparti en colonnes adaptées ;
+  actions de formulaire repliables ; menu compatible avec les petits écrans ;
+  suppression des débordements du tableau de bord et du détail à 320 px.
+  Les tableaux conservent leur défilement interne sans élargir la page.
+- **Navigation** : contenu derrière le menu ou le dialogue rendu inerte,
+  initialisation du focus après Alpine, restauration du focus après fermeture,
+  libération du défilement au passage en mode bureau.
+- **Formulaires** : bordures plus visibles, aides et erreurs identifiables par
+  les attributs ARIA générés par Django, focus sur les nouvelles lignes,
+  indication des lignes cochées pour suppression, contrôles tactiles améliorés.
+- **Prévisualisation** : annulation des requêtes précédentes, rejet des réponses
+  périmées, contrôle des erreurs HTTP, masquage des anciens résultats pendant
+  une actualisation et message explicite en cas d'indisponibilité. Les règles
+  de calcul serveur restent inchangées.
+- **Graphiques** : tableaux dépliables contenant les mêmes données, nom
+  accessible des canevas, prise en compte du mouvement réduit, police harmonisée
+  et barres financières plus contrastées.
+- **Notifications** : couleurs et séparateurs adaptés aux surfaces claires,
+  textes agrandis, états lu/non lu annoncés, panneau limité à la hauteur de
+  l'écran ; messages système différenciés selon leur nature.
+- **Listes financières** : devise affichée à côté des montants ; colonnes
+  d'actions nommées pour les lecteurs d'écran.
+- **Impression et courriel** : anciens aplats bleus harmonisés dans les rapports,
+  en-têtes de colonnes explicites, courriel adapté aux petits écrans. Le faux
+  lien dont la destination était un nom de site a été remplacé par une
+  instruction de connexion, sans inventer d'URL de production.
+- **Administration Django** : liens lisibles en mode sombre automatique et
+  respect du mouvement réduit.
+
+## Validation de cette revue
+
+- Construction Tailwind, collecte des fichiers statiques, contrôle syntaxique
+  des deux fichiers JavaScript et compilation de tous les templates HTML.
+- Suite Django : 27 tests réussis.
+- 18 routes rendues sur une base de test isolée, sans modification des comptes
+  ni des données métier de la base locale.
+- Chrome headless : matrice de 18 pages aux largeurs 320, 375, 768, 1024, 1440
+  et 1920 px. Deux débordements identifiés puis corrigés et revérifiés aux six
+  largeurs ; pas d'images manquantes ni d'exceptions JavaScript applicatives
+  dans les pages testées. Les connexions WebSocket ne sont pas exercées par
+  les copies HTML locales.
+- Huit contrôles d'interaction réussis : focus du menu mobile, isolation du
+  dialogue, boucle Tab, fermeture Échap et retour au déclencheur, redimensionnement
+  bureau, erreur réseau de prévisualisation, réponse périmée ignorée et focus
+  après ajout de ligne.
+- Inspection de captures du tableau de bord mobile/bureau, du formulaire tablette
+  et du dialogue mobile. Captures et scripts de travail dans `tmp/ui-review/`
+  et `tmp/audit_*.mjs` (fichiers locaux ignorés par Git).
+
+## Limites
+
+Les tests navigateur utilisent des HTML rendus par Django avec les scripts réels ;
+les erreurs et courses réseau sont simulées. Ils ne valident pas une session de
+production, le WebSocket, Safari/iOS, les lecteurs d'écran réels, les clients
+de messagerie ni la pagination physique de chaque document imprimé. Les thèmes
+de l'administration sont revus dans le code, sans matrice visuelle exhaustive.
+Ce travail ne constitue pas une certification WCAG.
+
+Les styles compilés et `staticfiles/` restent ignorés par Git : reconstruire
+les styles et lancer `collectstatic` lors du déploiement.
+
+---
+
+# Historique — audit du 22 septembre 2026
 
 ## Périmètre
 

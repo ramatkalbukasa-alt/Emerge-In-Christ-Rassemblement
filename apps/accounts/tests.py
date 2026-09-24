@@ -4,9 +4,50 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from .models import UserProfile
+
+
+@override_settings(SECURE_SSL_REDIRECT=False, STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class LoginRedirectTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        get_user_model().objects.create_user(username="login-user", password="Test-Login-927!")
+
+    def test_invalid_next_falls_back_to_dashboard(self):
+        for target in ("Nous", "/missing/", "https://example.org/", "//example.org/", "/login/Nous", "/login/Nous/", "/login/", "/logout/"):
+            with self.subTest(target=target):
+                response = self.client.post("/login/", {
+                    "username": "login-user", "password": "Test-Login-927!", "next": target,
+                })
+                self.assertRedirects(response, "/", fetch_redirect_response=False)
+
+    def test_valid_next_keeps_query(self):
+        response = self.client.post("/login/?next=/rapports/%3Fpage%3D2", {
+            "username": "login-user", "password": "Test-Login-927!",
+        })
+        self.assertRedirects(response, "/rapports/?page=2", fetch_redirect_response=False)
+
+    def test_old_bookmark_recovers(self):
+        for url in ("/login/Nous", "/login/Nous/"):
+            self.assertRedirects(self.client.get(url), "/", fetch_redirect_response=False)
+
+    def test_mobile_form_removes_invalid_target(self):
+        response = self.client.get("/login/?next=Nous", HTTP_USER_AGENT="Mozilla/5.0 (iPhone)")
+        self.assertContains(response, 'name="next" value=""')
+        self.assertContains(response, 'action="/login/"')
+        self.assertContains(response, 'autocapitalize="none"')
+
+    def test_wrong_password_does_not_authenticate(self):
+        response = self.client.post("/login/", {
+            "username": "login-user", "password": "incorrect", "next": "Nous",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
 
 
 class DeploymentAdminTests(TestCase):

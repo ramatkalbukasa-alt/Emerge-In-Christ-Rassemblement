@@ -31,7 +31,8 @@
           <div {% if field.name == "theme" or field.name == "scripture_text" %}class="xl:col-span-3"{% endif %}>
             <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-error">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
           </div>
         {% endif %}
       {% endfor %}
@@ -50,7 +51,8 @@
           <div>
             <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-error">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
           </div>
         {% endif %}
       {% endfor %}
@@ -69,13 +71,15 @@
           <div>
             <label class="mb-1.5 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
-            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-error">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
           </div>
         {% endif %}
       {% endfor %}
     </div>
 
     <!-- ── Panneau de prévisualisation financière ── -->
+    <p id="preview-status" role="status" class="mt-4 text-sm text-fg-muted"></p>
     <div id="finance-preview" class="mt-6 rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 text-sm hidden">
       <div class="flex items-center justify-between mb-3">
         <p class="font-mono text-[10px] uppercase tracking-wider text-fg-muted">
@@ -284,7 +288,7 @@
     <div id="{{ new_convert_formset.prefix }}-container" class="space-y-3">
       {% for f in new_convert_formset %}
         {{ f.non_field_errors }}
-        <div class="flex flex-wrap md:flex-nowrap gap-3 items-start md:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-start form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
           <div class="flex-1 min-w-[160px]">
             {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
             <label class="mb-1 block text-xs" for="{{ f.full_name.id_for_label }}">Nom complet</label>
@@ -316,7 +320,7 @@
       {% endfor %}
     </div>
     <template id="{{ new_convert_formset.prefix }}-empty">
-      <div class="flex flex-wrap md:flex-nowrap gap-3 items-start md:items-center form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-start form-row p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
         <div class="flex-1 min-w-[160px]">
           {% for hidden in new_convert_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
           <label class="mb-1 block text-xs" for="{{ new_convert_formset.empty_form.full_name.id_for_label }}">Nom complet</label>
@@ -354,7 +358,7 @@
     </button>
   </section>
 
-  <div class="flex items-center gap-4 pt-4 pb-12">
+  <div class="flex flex-wrap items-center gap-4 pt-4 pb-12">
     <button class="btn-primary" type="submit">Enregistrer le rapport</button>
     <a class="btn-secondary" href="{% url 'reports:list' %}">Annuler</a>
   </div>
@@ -375,7 +379,9 @@ document.addEventListener('alpine:init', () => {
       const newFormElement = document.createElement('div');
       newFormElement.innerHTML = newFormHtml;
 
-      container.appendChild(newFormElement.firstElementChild);
+      const row = newFormElement.firstElementChild;
+      container.appendChild(row);
+      row.querySelector("input:not([type=hidden])")?.focus();
       totalForms.value = formCount + 1;
 
       // Déclencher la mise à jour de la prévisualisation après ajout
@@ -387,7 +393,7 @@ document.addEventListener('alpine:init', () => {
 /* ── Prévisualisation financière temps réel ── */
 (function () {
   const PREVIEW_URL = "{% url 'reports:financial_preview' %}";
-  const CSRF_TOKEN  = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+  const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
   const $ = id => document.getElementById(id);
 
@@ -403,6 +409,8 @@ document.addEventListener('alpine:init', () => {
   const extensionSelect = document.getElementById('id_extension');
 
   let debounceTimer = null;
+  let previewRequest = null;
+  let revision = 0;
 
   function getExpenses() {
     // Collecte tous les champs montant des dépenses non supprimées
@@ -421,12 +429,18 @@ document.addEventListener('alpine:init', () => {
 
   function triggerPreview() {
     clearTimeout(debounceTimer);
+    revision += 1;
+    previewRequest?.abort();
+    $('finance-preview').classList.add('hidden');
+    $('preview-status').textContent = 'Actualisation des montants…';
     debounceTimer = setTimeout(fetchPreview, 300);
   }
   // Exposer pour le formsetManager Alpine
   window.triggerPreview = triggerPreview;
 
   function fetchPreview() {
+    const currentRevision = revision;
+    previewRequest = new AbortController();
     const extId = extensionSelect ? extensionSelect.value : null;
     const payload = {
       extension_id:          extId ? parseInt(extId) : null,
@@ -439,15 +453,24 @@ document.addEventListener('alpine:init', () => {
 
     fetch(PREVIEW_URL, {
       method:  'POST',
+      signal: previewRequest.signal,
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken':  CSRF_TOKEN,
       },
       body: JSON.stringify(payload),
     })
-    .then(r => r.json())
-    .then(data => updatePreview(data))
-    .catch(() => {});  // Silencieux — ne pas bloquer la saisie
+    .then(r => { if (!r.ok) throw new Error('Preview unavailable'); return r.json(); })
+    .then(data => {
+      if (currentRevision !== revision) return;
+      updatePreview(data);
+      $('preview-status').textContent = '';
+    })
+    .catch(error => {
+      if (error.name === 'AbortError' || currentRevision !== revision) return;
+      $('finance-preview').classList.add('hidden');
+      $('preview-status').textContent = 'Prévisualisation indisponible. Vous pouvez poursuivre la saisie ; les montants seront recalculés à l’enregistrement.';
+    });
   }
 
   function fmt(val) {

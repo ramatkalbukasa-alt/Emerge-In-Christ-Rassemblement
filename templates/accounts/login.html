@@ -46,7 +46,7 @@
           </div>
         {% endif %}
 
-        <form method="post" class="space-y-6" x-data="{ loading: false, showPassword: false }" @submit="loading = true">
+        <form method="post" action="{% url 'login' %}" class="space-y-6" x-data="{ loading: false, showPassword: false }" @submit="loading = true" @pageshow.window="loading = false">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ next }}">
 
@@ -64,7 +64,7 @@
                        name="{{ form.username.name }}"
                        id="{{ form.username.id_for_label }}"
                        class="pl-11"
-                       placeholder="Votre identifiant" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}"
+                       placeholder="Votre identifiant" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" value="{{ form.username.value|default_if_none:'' }}"
                        required>
               </div>
               {% for error in form.username.errors %}

@@ -23,8 +23,8 @@
     body {
       font-family: 'Inter', Arial, sans-serif;
       font-size: 10pt;
-      color: #1a1a2e;
-      background: #eef1f7;
+      color: #241606;
+      background: #F7F6F4;
       padding: 24px 12px;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -360,12 +360,12 @@
     <table class="tbl-effectif">
       <thead>
         <tr>
-          <th>Papas</th>
-          <th>Mamans</th>
-          <th>Frères</th>
-          <th>Sœurs</th>
-          <th>Enfants</th>
-          <th>Total</th>
+          <th scope="col">Papas</th>
+          <th scope="col">Mamans</th>
+          <th scope="col">Frères</th>
+          <th scope="col">Sœurs</th>
+          <th scope="col">Enfants</th>
+          <th scope="col">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -387,11 +387,11 @@
     <table class="tbl-recettes">
       <thead>
         <tr>
-          <th style="text-align:left;width:34%">Type de recette</th>
-          <th>Montant ({{ sym }})</th>
-          <th>Dîme {{ report.tithe_percentage_snapshot|floatformat:0 }}%</th>
-          <th>Social ({{ report.social_percentage_snapshot|floatformat:0 }}%)</th>
-          <th>Reste</th>
+          <th scope="col" style="text-align:left;width:34%">Type de recette</th>
+          <th scope="col">Montant ({{ sym }})</th>
+          <th scope="col">Dîme {{ report.tithe_percentage_snapshot|floatformat:0 }}%</th>
+          <th scope="col">Social ({{ report.social_percentage_snapshot|floatformat:0 }}%)</th>
+          <th scope="col">Reste</th>
         </tr>
       </thead>
       <tbody>
@@ -444,9 +444,9 @@
     <table class="tbl-depenses">
       <thead>
         <tr>
-          <th style="width:40px">N°</th>
-          <th style="width:140px;text-align:right">Montant ({{ sym }})</th>
-          <th style="text-align:left">Motif</th>
+          <th scope="col" style="width:40px">N°</th>
+          <th scope="col" style="width:140px;text-align:right">Montant ({{ sym }})</th>
+          <th scope="col" style="text-align:left">Motif</th>
         </tr>
       </thead>
       <tbody>
@@ -496,8 +496,8 @@
     <table class="tbl-depenses">
       <thead>
         <tr>
-          <th style="text-align:left">Nom</th>
-          <th style="text-align:left">Invité par</th>
+          <th scope="col" style="text-align:left">Nom</th>
+          <th scope="col" style="text-align:left">Invité par</th>
         </tr>
       </thead>
       <tbody>
@@ -517,10 +517,10 @@
     <table class="tbl-depenses">
       <thead>
         <tr>
-          <th style="text-align:left">Nom</th>
-          <th style="text-align:left">Téléphone</th>
-          <th style="text-align:left">Adresse</th>
-          <th style="text-align:left">Suivi par</th>
+          <th scope="col" style="text-align:left">Nom</th>
+          <th scope="col" style="text-align:left">Téléphone</th>
+          <th scope="col" style="text-align:left">Adresse</th>
+          <th scope="col" style="text-align:left">Suivi par</th>
         </tr>
       </thead>
       <tbody>

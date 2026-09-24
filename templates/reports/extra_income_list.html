@@ -34,7 +34,7 @@
             <td class="px-6 py-4 font-mono text-xs text-fg-muted whitespace-nowrap">{{ item.income_date|date:"d/m/Y" }}</td>
             <td class="px-6 py-4 font-semibold text-fg">{{ item.extension.name }}</td>
             <td class="px-6 py-4 text-fg-muted">{{ item.description|default:"-" }}</td>
-            <td class="px-6 py-4 text-right font-mono font-semibold text-bronze whitespace-nowrap">{{ item.amount }}</td>
+            <td class="px-6 py-4 text-right font-mono font-semibold text-bronze whitespace-nowrap">{{ item.amount }} <span class="currency-code">{{ item.currency.code|default:item.extension.currency.code|default:item.extension.currency_code_legacy }}</span></td>
           </tr>
         {% empty %}
           <tr>

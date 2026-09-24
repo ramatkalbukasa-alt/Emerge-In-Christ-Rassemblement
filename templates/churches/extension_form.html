@@ -22,8 +22,8 @@
       <div {% if field.name == "address" %}class="md:col-span-2"{% endif %}>
         <label class="mb-1 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
-        {% if field.help_text %}<p class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
-        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="mt-2 text-sm text-fg-muted">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-error">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
       </div>
     {% endfor %}
   </div>

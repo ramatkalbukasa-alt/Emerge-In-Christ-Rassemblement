@@ -26,9 +26,9 @@
         <!-- Indicateur lu/non lu -->
         <div class="mt-1.5 flex-shrink-0">
           {% if not notif.is_read %}
-            <span class="block h-2.5 w-2.5 rounded-full bg-accent-bright"></span>
+            <span class="block h-2.5 w-2.5 rounded-full bg-accent-bright" aria-hidden="true"></span><span class="sr-only">Non lue</span>
           {% else %}
-            <span class="block h-2.5 w-2.5 rounded-full bg-black/15"></span>
+            <span class="block h-2.5 w-2.5 rounded-full bg-black/15" aria-hidden="true"></span><span class="sr-only">Lue</span>
           {% endif %}
         </div>
 
