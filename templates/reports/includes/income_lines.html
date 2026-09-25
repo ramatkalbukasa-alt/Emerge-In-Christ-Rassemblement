@@ -1,0 +1,12 @@
+{% if income_lines %}
+<section class="deco-card p-6 mt-6">
+  <h2 class="text-lg font-semibold">Entrées en devises d’origine</h2>
+  <p class="mt-2 text-sm text-fg-muted">Ces entrées sont déjà incluses dans les totaux du rapport. Les taux ci-dessous sont ceux utilisés à l’enregistrement.</p>
+  <div class="overflow-x-auto mt-4" tabindex="0" role="region" aria-label="Entrées en devises">
+    <table class="deco-table">
+      <thead><tr><th scope="col">Catégorie</th><th scope="col">Montant reçu</th><th scope="col">Taux appliqué</th><th scope="col">Montant en {{ report_currency.code }}</th></tr></thead>
+      <tbody>{% for line in income_lines %}<tr><td>{{ line.get_category_display }}</td><td>{{ line.amount|floatformat:2 }} {{ line.currency.code }}</td><td>1 {{ line.currency.code }} = {{ line.exchange_rate|floatformat:6 }} {{ report_currency.code }}</td><td>{{ line.converted_amount|floatformat:2 }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+{% endif %}

@@ -2,10 +2,23 @@ from django import forms
 from django.forms import inlineformset_factory
 
 from apps.churches.models import Currency
+from decimal import Decimal
+from .models import ReportIncomeLine
 from .models import Expense, ExtraIncome, ExtraExpense, NewConvert, Newcomer, ServiceReport
 
 
-class ServiceReportForm(forms.ModelForm):
+class RecordCurrencyForm(forms.ModelForm):
+    def clean(self):
+        data = super().clean()
+        if not data.get("currency") and data.get("extension"):
+            from apps.churches.currency_service import get_currency_for_extension
+            data["currency"] = get_currency_for_extension(data["extension"])
+            if not data["currency"]:
+                self.add_error("currency", "Sélectionnez la devise des montants saisis.")
+        return data
+
+
+class ServiceReportForm(RecordCurrencyForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -13,7 +26,7 @@ class ServiceReportForm(forms.ModelForm):
         
         # Filtrer les devises actives
         self.fields['currency'].queryset = Currency.objects.filter(is_active=True)
-        self.fields['currency'].empty_label = "-- Sélectionner une devise --"
+        self.fields['currency'].empty_label = "Devise de l’extension (automatique)"
 
     class Meta:
         model = ServiceReport
@@ -64,7 +77,30 @@ class ExpenseForm(forms.ModelForm):
         }
 
 
-class ExtraIncomeForm(forms.ModelForm):
+class ReportIncomeLineForm(forms.ModelForm):
+    amount = forms.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), label="Montant reçu")
+
+    class Meta:
+        model = ReportIncomeLine
+        fields = ["category", "amount", "currency"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["currency"].queryset = Currency.objects.filter(is_active=True)
+        self.fields["currency"].empty_label = "Sélectionner une devise"
+        self.fields["category"].initial = None
+        self.fields["category"].choices = [("", "Sélectionner une catégorie"), *ReportIncomeLine.Category.choices]
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+
+ReportIncomeLineFormSet = inlineformset_factory(
+    ServiceReport, ReportIncomeLine, form=ReportIncomeLineForm,
+    extra=0, can_delete=True, max_num=100, validate_max=True, absolute_max=100,
+)
+
+
+class ExtraIncomeForm(RecordCurrencyForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -72,7 +108,7 @@ class ExtraIncomeForm(forms.ModelForm):
         
         # Filtrer les devises actives
         self.fields['currency'].queryset = Currency.objects.filter(is_active=True)
-        self.fields['currency'].empty_label = "-- Sélectionner une devise --"
+        self.fields['currency'].empty_label = "Devise de l’extension (automatique)"
 
     class Meta:
         model = ExtraIncome
@@ -94,7 +130,7 @@ ExpenseFormSet = inlineformset_factory(
     can_delete=True,
 )
 
-class ExtraExpenseForm(forms.ModelForm):
+class ExtraExpenseForm(RecordCurrencyForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -102,7 +138,7 @@ class ExtraExpenseForm(forms.ModelForm):
         
         # Filtrer les devises actives
         self.fields['currency'].queryset = Currency.objects.filter(is_active=True)
-        self.fields['currency'].empty_label = "-- Sélectionner une devise --"
+        self.fields['currency'].empty_label = "Devise de l’extension (automatique)"
 
     class Meta:
         model = ExtraExpense

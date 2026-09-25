@@ -167,6 +167,9 @@ th, td { overflow-wrap: anywhere; }
 .report-list-table table { min-width: 900px; }
 .report-list-table th, .report-list-table td { overflow-wrap: normal; }
 .report-list-table th, .report-list-table td:nth-child(n+3) { white-space: nowrap; }
+.recent-reports-table { min-width: 720px; }
+.recent-reports-table th, .recent-reports-table td { overflow-wrap: normal; white-space: nowrap; }
+.recent-reports-table th:nth-child(3), .recent-reports-table td:nth-child(3) { min-width: 90px; text-align: right; }
 @media (max-width: 767px) {
   .report-list-actions { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
   .report-list-actions .btn-primary { grid-row: 1; }

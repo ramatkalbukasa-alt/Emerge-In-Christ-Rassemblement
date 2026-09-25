@@ -8,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import admin
 
 from apps.churches.models import ChurchExtension, Currency
-from apps.churches.currency_service import convert_currency
+from apps.churches.currency_service import convert_currency, get_currency_for_extension, get_exchange_rate, CurrencyConversionError
 from apps.reports.permissions import reports_for_user, user_extension, user_is_admin
 
 
@@ -40,15 +40,8 @@ def home(request):
 
     # Preserve the report-only scope and stored financial formulas. Use the
     # existing currency conversion service, as the periodic reports do.
-    currencies = {currency.code: currency for currency in Currency.objects.all()}
-
-    def extension_currency(ext):
-        if ext.currency_id:
-            return ext.currency
-        # An unidentified source must not silently become the default currency.
-        return currencies.get(ext.currency_code_legacy)
-
-    display_currency = Currency.get_default() if is_admin else (extension_currency(extension) if extension else None)
+    display_currency = Currency.get_default() if is_admin else get_currency_for_extension(extension)
+    conversion_rates = {}
     financial_available = display_currency is not None
     has_conversion = False
     recent_reports = []
@@ -63,15 +56,16 @@ def home(request):
         })
         row["attendance"] += report.total_attendance
         row["count"] += 1
-        source = report.currency or extension_currency(report.extension)
-        can_convert = bool(source and display_currency and (
-            source.pk == display_currency.pk or (source.usd_rate > 0 and display_currency.usd_rate > 0)
-        ))
-        if not can_convert:
+        source = report.currency or get_currency_for_extension(report.extension)
+        report.source_currency = source
+        try:
+            rate = get_exchange_rate(source, display_currency)
+            amounts = {key: convert_currency(getattr(report, field), source, display_currency) for key, field in fields.items()}
+        except CurrencyConversionError:
             financial_available = False
             continue
         has_conversion |= source.pk != display_currency.pk
-        amounts = {key: convert_currency(getattr(report, field), source, display_currency) for key, field in fields.items()}
+        conversion_rates[source.code] = {"source": source.code, "rate": rate}
         for key, amount in amounts.items():
             totals[key] += amount
         row["total"] += amounts["offerings"]
@@ -114,6 +108,7 @@ def home(request):
             "display_currency": display_currency,
             "financial_available": financial_available,
             "has_conversion": has_conversion,
+            "conversion_rates": list(conversion_rates.values()),
             # JSON payloads for Chart.js
             "chart_trend_labels": json.dumps(trend_labels),
             "chart_trend_offerings": json.dumps(trend_offerings),

@@ -1,6 +1,17 @@
 from django.contrib import admin
 
 from .models import Expense, ExtraIncome, ExtraExpense, NewConvert, Newcomer, ServiceReport
+from .models import ReportIncomeLine
+
+
+class ReportIncomeLineInline(admin.TabularInline):
+    model = ReportIncomeLine
+    extra = 0
+    can_delete = False
+    fields = readonly_fields = ["category", "amount", "currency", "exchange_rate", "converted_amount"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 class ExpenseInline(admin.TabularInline):
@@ -34,12 +45,22 @@ class ServiceReportAdmin(admin.ModelAdmin):
         "total_attendance", "total_offerings",
         "total_expenses", "tithe_deduction", "social_deduction", "net_balance",
     ]
-    inlines = [ExpenseInline, NewcomerInline, NewConvertInline]
+    inlines = [ExpenseInline, NewcomerInline, NewConvertInline, ReportIncomeLineInline]
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj and obj.income_lines.exists():
+            fields += ["currency", "extension", "offering_regular", "offering_preacher", "offering_tithe", "offering_thanksgiving"]
+        return fields
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        form.instance.refresh_totals()
 
     fieldsets = [
         ("Informations du culte", {
             "fields": [
-                "extension", "service_type", "service_date",
+                "extension", "service_type", "service_date", "currency",
                 "service_time_start", "service_time_end",
                 "preacher", "moderator", "interpreter", "scripture_text", "theme",
             ]

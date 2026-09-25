@@ -205,6 +205,27 @@ class ServiceReport(models.Model):
         self.save()
 
 
+class ReportIncomeLine(models.Model):
+    """Original additional receipts, included in the report's stored category totals."""
+    class Category(models.TextChoices):
+        REGULAR = "offering_regular", "Offrandes ordinaires"
+        PREACHER = "offering_preacher", "Offrandes pour l’orateur"
+        TITHE = "offering_tithe", "Dîmes"
+        THANKSGIVING = "offering_thanksgiving", "Actions de grâce"
+
+    report = models.ForeignKey(ServiceReport, on_delete=models.CASCADE, related_name="income_lines")
+    category = models.CharField(max_length=30, choices=Category.choices, verbose_name="Catégorie")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Montant reçu")
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name="Devise reçue")
+    exchange_rate = models.DecimalField(max_digits=24, decimal_places=12, editable=False)
+    converted_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
+
+    class Meta:
+        ordering = ["pk"]
+        verbose_name = "Entrée en devise"
+        verbose_name_plural = "Entrées en devises"
+
+
 class Expense(models.Model):
     """Ligne de dépense détaillée liée à un rapport de culte."""
 

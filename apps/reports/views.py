@@ -1,21 +1,26 @@
 import csv
 import json
 from decimal import Decimal
+from functools import wraps
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .forms import ExpenseFormSet, NewConvertFormSet, NewcomerFormSet, ServiceReportForm, ExtraIncomeForm, ExtraExpenseForm
+from .forms import ReportIncomeLineFormSet
+from .models import ReportIncomeLine
 from .models import Expense, ExtraIncome, ExtraExpense, ServiceReport
 from .permissions import reports_for_user, user_extension, user_is_admin
 from .realtime import publish_report_created
-from .services import convert_to_usd, money
-from apps.churches.currency_service import convert_currency, get_currency_for_extension
+from .services import money, prepare_income_lines
+from apps.churches.currency_service import convert_currency, get_currency_for_extension, get_record_currency, CurrencyConversionError
+from apps.churches.models import Currency
 
 MOIS_FR = [
     "", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -26,6 +31,16 @@ MOIS_FR = [
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+def conversion_required(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        try:
+            return view(request, *args, **kwargs)
+        except CurrencyConversionError as exc:
+            return render(request, "reports/conversion_unavailable.html", {"reason": str(exc)}, status=422)
+    return wrapped
+
 
 def _report_filename(report, extension):
     date_part = report.service_date.isoformat()
@@ -38,9 +53,10 @@ def _money(value):
 
 
 def _report_rows(report):
-    return [
+    rows = [
         ("Extension", report.extension.name),
         ("Date", report.service_date),
+        ("Devise", get_record_currency(report).code if get_record_currency(report) else "Non renseignée"),
         ("Type", report.get_service_type_display()),
         ("Prédicateur", report.preacher or ""),
         ("Modérateur", report.moderator or ""),
@@ -63,6 +79,11 @@ def _report_rows(report):
         ("Dépenses du culte", _money(report.total_expenses)),
         ("Solde net du culte", _money(report.net_balance)),
     ]
+
+    for line in report.income_lines.select_related("currency"):
+        rows.append(("Entrée — " + line.get_category_display(),
+                     f"{line.amount} {line.currency.code} × {line.exchange_rate} = {line.converted_amount} {get_record_currency(report).code}"))
+    return rows
 
 
 def _get_ventilation(report):
@@ -120,13 +141,37 @@ def report_financial_preview(request):
             ext = ChurchExtension.objects.get(pk=int(extension_id))
             tithe_pct  = ext.tithe_percentage
             social_pct = ext.social_percentage
-        except (ChurchExtension.DoesNotExist, (ValueError, TypeError)):
+        except (ChurchExtension.DoesNotExist, ValueError, TypeError):
             pass
 
     ordinaires    = to_decimal(data.get("offering_regular",       0))
     orateur       = to_decimal(data.get("offering_preacher",      0))
     dimes         = to_decimal(data.get("offering_tithe",         0))
     actions_grace = to_decimal(data.get("offering_thanksgiving",  0))
+    try:
+        target = Currency.objects.filter(pk=data.get("currency_id")).first() if data.get("currency_id") else None
+        if not target:
+            preview_ext = ChurchExtension.objects.filter(pk=extension_id).first() if extension_id else user_extension(request.user)
+            target = get_currency_for_extension(preview_ext)
+        raw_lines = data.get("income_lines", [])
+        if not isinstance(raw_lines, list) or len(raw_lines) > 100:
+            raise ValueError("Nombre de lignes invalide")
+        lines = []
+        for item in raw_lines:
+            amount = Decimal(str(item["amount"]))
+            if not amount.is_finite() or amount <= 0 or item["category"] not in ReportIncomeLine.Category.values:
+                raise ValueError("Entrée invalide")
+            currency = Currency.objects.filter(pk=item["currency"], is_active=True).first()
+            if not currency:
+                raise ValueError("Devise invalide")
+            lines.append(ReportIncomeLine(category=item["category"], amount=amount, currency=currency))
+        converted, _ = prepare_income_lines({
+            "offering_regular": ordinaires, "offering_preacher": orateur,
+            "offering_tithe": dimes, "offering_thanksgiving": actions_grace,
+        }, lines, target)
+        ordinaires, orateur, dimes, actions_grace = [converted[key] for key in ReportIncomeLine.Category.values]
+    except (CurrencyConversionError, ValueError, TypeError, KeyError, ArithmeticError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     expenses_raw  = data.get("expenses", [])
 
     total_expenses = money(sum(
@@ -142,6 +187,8 @@ def report_financial_preview(request):
         return str(d)
 
     return JsonResponse({
+        "currency_code": target.code if target else "",
+        "amounts": {key: str(value) for key, value in converted.items()},
         "tithe_pct":   str(tithe_pct),
         "social_pct":  str(social_pct),
         "rows": {
@@ -257,7 +304,7 @@ def _export_reports_csv(reports):
     writer = csv.writer(response)
     writer.writerow([
         "Date", "Extension", "Type", "Présence",
-        "Offrandes", "Dîmes", "Social", "Dépenses", "Solde",
+        "Offrandes", "Dîmes", "Social", "Dépenses", "Solde", "Devise",
     ])
     for report in reports:
         writer.writerow([
@@ -270,6 +317,7 @@ def _export_reports_csv(reports):
             _money(report.social_deduction),
             _money(report.total_expenses),
             _money(report.net_balance),
+            get_record_currency(report).code if get_record_currency(report) else "Non renseignée",
         ])
     return response
 
@@ -289,17 +337,22 @@ def report_detail(request, pk):
     report = get_object_or_404(reports_for_user(request.user), pk=pk)
     ventilation = _get_ventilation(report)
     ext = report.extension
-    ext_currency = get_currency_for_extension(ext)
-    usd_balance = convert_to_usd(report.net_balance, ext)
+    ext_currency = get_record_currency(report)
+    try:
+        usd_balance = convert_currency(report.net_balance, ext_currency, "USD")
+    except CurrencyConversionError:
+        usd_balance = None
     return render(request, "reports/report_detail.html", {
         "report": report,
         "total_deductions": report.tithe_deduction + report.social_deduction,
         "ventilation": ventilation,
+        "income_lines": report.income_lines.select_related("currency"),
         "expense_items": report.expense_items.all(),
         "newcomers": report.newcomers.all(),
         "new_converts": report.new_converts.all(),
         "usd_balance": usd_balance,
-        "show_usd": bool(ext_currency and ext_currency.code != "USD"),
+        "show_usd": bool(ext_currency and ext_currency.code != "USD" and usd_balance is not None),
+        "report_currency": ext_currency,
     })
 
 
@@ -308,18 +361,23 @@ def report_print(request, pk):
     report = get_object_or_404(reports_for_user(request.user), pk=pk)
     ventilation = _get_ventilation(report)
     ext = report.extension
-    ext_currency = get_currency_for_extension(ext)
-    usd_balance = convert_to_usd(report.net_balance, ext)
+    ext_currency = get_record_currency(report)
+    try:
+        usd_balance = convert_currency(report.net_balance, ext_currency, "USD")
+    except CurrencyConversionError:
+        usd_balance = None
     return render(request, "reports/report_print.html", {
         "report": report,
         "ventilation": ventilation,
+        "income_lines": report.income_lines.select_related("currency"),
         "expense_items": report.expense_items.all(),
         "newcomers": report.newcomers.all(),
         "new_converts": report.new_converts.all(),
         "usd_balance": usd_balance,
-        "show_usd": bool(ext_currency and ext_currency.code != "USD"),
-        "currency_symbol": ext_currency.symbol if ext_currency else "$",
-        "currency_code": ext_currency.code if ext_currency else "USD",
+        "show_usd": bool(ext_currency and ext_currency.code != "USD" and usd_balance is not None),
+        "report_currency": ext_currency,
+        "currency_symbol": ext_currency.symbol if ext_currency else "—",
+        "currency_code": ext_currency.code if ext_currency else "Non renseignée",
         "exchange_rate_to_usd": ext_currency.usd_rate if ext_currency else 1,
     })
 
@@ -339,25 +397,39 @@ def report_export(request, pk, file_format):
 
 
 @login_required
+@conversion_required
 def reports_export(request, file_format):
     reports = reports_for_user(request.user)
     if file_format == "csv":
         return _export_reports_csv(reports)
     if file_format == "html":
+        target = Currency.get_default() if user_is_admin(request.user) else get_currency_for_extension(user_extension(request.user))
+        reports = list(reports.select_related("currency", "extension__currency"))
+        fields = ["total_offerings", "tithe_deduction", "social_deduction", "net_balance"]
+        totals = {field: Decimal("0.00") for field in fields}
+        totals["total_attendance"] = 0
+        for report in reports:
+            totals["total_attendance"] += report.total_attendance
+            for field in fields:
+                amount = convert_currency(getattr(report, field), get_record_currency(report), target)
+                setattr(report, field + "_disp", amount)
+                totals[field] += amount
         html = render_to_string(
-            "reports/report_collection_print.html", {"reports": reports}, request=request
+            "reports/report_collection_print.html", {"reports": reports, "totals": totals, "display_currency": target}, request=request
         )
         return HttpResponse(html)
     return redirect("reports:list")
 
 
 @login_required
+@transaction.atomic
 def report_create(request):
     initial = {}
     if not user_is_admin(request.user):
         initial["extension"] = user_extension(request.user)
 
     form = ServiceReportForm(request.POST or None, initial=initial)
+    income_formset = ReportIncomeLineFormSet(request.POST or None, prefix="income_lines")
     expense_formset = ExpenseFormSet(request.POST or None, prefix="expenses")
     newcomer_formset = NewcomerFormSet(request.POST or None, prefix="newcomers")
     new_convert_formset = NewConvertFormSet(request.POST or None, prefix="converts")
@@ -366,12 +438,25 @@ def report_create(request):
         form.fields["extension"].disabled = True
         form.fields["extension"].required = False
 
-    if form.is_valid() and expense_formset.is_valid() and newcomer_formset.is_valid() and new_convert_formset.is_valid():
+    valid = all([form.is_valid(), expense_formset.is_valid(), newcomer_formset.is_valid(), new_convert_formset.is_valid(), income_formset.is_valid()])
+    prepared_lines = []
+    if valid:
+        try:
+            converted_totals, prepared_lines = prepare_income_lines(form.cleaned_data, income_formset.save(commit=False), form.cleaned_data["currency"])
+        except CurrencyConversionError as exc:
+            form.add_error(None, str(exc))
+            valid = False
+    if valid:
         report = form.save(commit=False)
+        for field, amount in converted_totals.items():
+            setattr(report, field, amount)
         if not user_is_admin(request.user):
             report.extension = user_extension(request.user)
         report.submitted_by = request.user
         report.save()
+        for line in prepared_lines:
+            line.report = report
+            line.save()
 
         # Sauvegarder les lignes de dépenses
         expenses = expense_formset.save(commit=False)
@@ -426,6 +511,7 @@ def report_create(request):
 
     return render(request, "reports/report_form.html", {
         "form": form,
+        "income_formset": income_formset,
         "expense_formset": expense_formset,
         "newcomer_formset": newcomer_formset,
         "new_convert_formset": new_convert_formset,
@@ -496,6 +582,7 @@ def extra_expense_create(request):
 # ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
+@conversion_required
 def report_monthly(request, year, month):
     """Vue du rapport mensuel (affichage dans le navigateur)."""
     extension_id = request.GET.get("extension")
@@ -517,6 +604,7 @@ def report_monthly(request, year, month):
 
 
 @login_required
+@conversion_required
 def report_monthly_print(request, year, month):
     """Rapport mensuel version imprimable."""
     extension_id = request.GET.get("extension")
@@ -529,7 +617,7 @@ def report_monthly_print(request, year, month):
     )
     
     ext = selected_ext
-    ext_currency = get_currency_for_extension(ext) if ext else None
+    ext_currency = get_currency_for_extension(ext) if ext else Currency.get_default()
     sym = ext_currency.symbol if ext_currency else "$"
     
     usd_totals = _totals_in_usd(totals, ext) if (ext and not is_consolidated) else None
@@ -546,7 +634,7 @@ def report_monthly_print(request, year, month):
         "month_name": MOIS_FR[month],
         "extension": ext,
         "currency_symbol": sym,
-        "currency_code": ext_currency.code if ext_currency else "USD",
+        "currency_code": ext_currency.code if ext_currency else "Non renseignée",
         "exchange_rate_to_usd": ext_currency.usd_rate if ext_currency else 1,
         "show_usd": bool(ext_currency and ext_currency.code != "USD" and not is_consolidated),
         "is_consolidated": is_consolidated,
@@ -558,6 +646,7 @@ def report_monthly_print(request, year, month):
 
 
 @login_required
+@conversion_required
 def report_quarterly_print(request, year, quarter):
     """Rapport trimestriel version imprimable. quarter = 1,2,3,4"""
     quarter = int(quarter)
@@ -594,7 +683,7 @@ def report_quarterly_print(request, year, quarter):
         })
     
     ext = selected_ext
-    ext_currency = get_currency_for_extension(ext) if ext else None
+    ext_currency = get_currency_for_extension(ext) if ext else Currency.get_default()
     sym = ext_currency.symbol if ext_currency else "$"
     
     usd_totals = _totals_in_usd(quarter_totals, ext) if (ext and not is_consolidated) else None
@@ -614,7 +703,7 @@ def report_quarterly_print(request, year, quarter):
         "quarter_name": quarter_names.get(quarter, f"T{quarter}"),
         "extension": ext,
         "currency_symbol": sym,
-        "currency_code": ext_currency.code if ext_currency else "USD",
+        "currency_code": ext_currency.code if ext_currency else "Non renseignée",
         "exchange_rate_to_usd": ext_currency.usd_rate if ext_currency else 1,
         "show_usd": bool(ext_currency and ext_currency.code != "USD" and not is_consolidated),
         "is_consolidated": is_consolidated,
@@ -626,6 +715,7 @@ def report_quarterly_print(request, year, quarter):
 
 
 @login_required
+@conversion_required
 def report_annual_print(request, year):
     """Rapport annuel version imprimable."""
     extension_id = request.GET.get("extension")
@@ -659,7 +749,7 @@ def report_annual_print(request, year):
         })
     
     ext = selected_ext
-    ext_currency = get_currency_for_extension(ext) if ext else None
+    ext_currency = get_currency_for_extension(ext) if ext else Currency.get_default()
     sym = ext_currency.symbol if ext_currency else "$"
     
     usd_totals = _totals_in_usd(annual_totals, ext) if (ext and not is_consolidated) else None
@@ -674,7 +764,7 @@ def report_annual_print(request, year):
         "year": year,
         "extension": ext,
         "currency_symbol": sym,
-        "currency_code": ext_currency.code if ext_currency else "USD",
+        "currency_code": ext_currency.code if ext_currency else "Non renseignée",
         "exchange_rate_to_usd": ext_currency.usd_rate if ext_currency else 1,
         "show_usd": bool(ext_currency and ext_currency.code != "USD" and not is_consolidated),
         "is_consolidated": is_consolidated,
@@ -733,168 +823,45 @@ def _aggregate_totals(reports, year, month=None, months=None, user=None, extensi
             extras_income_qs = extras_income_qs.filter(extension=ext)
             extras_expense_qs = extras_expense_qs.filter(extension=ext)
 
+    if user and not user_is_admin(user) and not selected_ext:
+        reports_filtered = reports_filtered.none()
+        extras_income_qs = extras_income_qs.none()
+        extras_expense_qs = extras_expense_qs.none()
     is_consolidated = (user_is_admin(user) and not selected_ext)
     
-    if is_consolidated:
-        # CONSOLIDATION MULTI-DEVISE EN USD
-        from apps.churches.models import Currency
-        
-        total_presence = 0
-        total_offrandes = Decimal("0")
-        total_dimes = Decimal("0")
-        total_social = Decimal("0")
-        total_depenses = Decimal("0")
-        total_reste_culte = Decimal("0")
-        
-        usd_currency = Currency.get_default()
-        
-        for r in reports_filtered.select_related("extension", "currency"):
-            # Obtenir la devise du rapport (ou celle de l'extension par défaut)
-            from_currency = r.currency or get_currency_for_extension(r.extension)
-            # Convertir vers USD
-            total_presence += r.total_attendance
-            total_offrandes += convert_currency(r.total_offerings, from_currency, usd_currency)
-            total_dimes += convert_currency(r.tithe_deduction, from_currency, usd_currency)
-            total_social += convert_currency(r.social_deduction, from_currency, usd_currency)
-            total_depenses += convert_currency(r.total_expenses, from_currency, usd_currency)
-            total_reste_culte += convert_currency(r.net_balance, from_currency, usd_currency)
-            
-        extra_income_total = Decimal("0")
-        extras_income_list = []
-        for ei in extras_income_qs.select_related("extension", "currency"):
-            from_currency = ei.currency or get_currency_for_extension(ei.extension)
-            amt = convert_currency(ei.amount, from_currency, usd_currency)
-            extra_income_total += amt
-            extras_income_list.append({
-                "date": ei.income_date,
-                "description": ei.description,
-                "amount": amt,
-                "extension": ei.extension.name,
-                "currency": from_currency.symbol if from_currency else "$",
-            })
-            
-        extra_expense_total = Decimal("0")
-        extras_expense_list = []
-        for ee in extras_expense_qs.select_related("extension", "currency"):
-            from_currency = ee.currency or get_currency_for_extension(ee.extension)
-            amt = convert_currency(ee.amount, from_currency, usd_currency)
-            extra_expense_total += amt
-            extras_expense_list.append({
-                "date": ee.expense_date,
-                "description": ee.description,
-                "amount": amt,
-                "extension": ee.extension.name,
-                "currency": from_currency.symbol if from_currency else "$",
-            })
-            
-        total_reste = money(total_reste_culte + extra_income_total - extra_expense_total)
-        
-        totals = {
-            "total_cultes": reports_filtered.count(),
-            "total_presence": total_presence,
-            "total_offrandes": total_offrandes,
-            "total_dimes": total_dimes,
-            "total_social": total_social,
-            "total_depenses": total_depenses,
-            "total_reste_culte": total_reste_culte,
-            "total_extras": extra_income_total,
-            "total_extra_expenses": extra_expense_total,
-            "total_reste": total_reste,
-        }
-    else:
-        # MODE DEVISE LOCALE (Une seule extension ou fallback admin)
-        from apps.churches.models import Currency
-        
-        # Déterminer la devise cible (celle de l'extension ou USD par défaut)
-        target_currency = None
-        if selected_ext:
-            target_currency = get_currency_for_extension(selected_ext)
-        else:
-            target_currency = Currency.get_default()
-        
-        agg = reports_filtered.aggregate(
-            total_presence=Sum("total_attendance"),
-            total_offrandes=Sum("total_offerings"),
-            total_dimes=Sum("tithe_deduction"),
-            total_social=Sum("social_deduction"),
-            total_depenses=Sum("total_expenses"),
-            total_reste_culte=Sum("net_balance"),
-        )
-        total_presence = agg["total_presence"] or 0
-        total_offrandes = money(agg["total_offrandes"] or 0)
-        total_dimes = money(agg["total_dimes"] or 0)
-        total_social = money(agg["total_social"] or 0)
-        total_depenses = money(agg["total_depenses"] or 0)
-        total_reste_culte = money(agg["total_reste_culte"] or 0)
-        
-        extra_income_total = money(extras_income_qs.aggregate(t=Sum('amount'))['t'] or 0)
-        extras_income_list = []
-        for ei in extras_income_qs.select_related("currency"):
-            from_currency = ei.currency or (get_currency_for_extension(ei.extension) if ei.extension else target_currency)
-            # Convertir vers la devise cible si nécessaire
-            if from_currency and from_currency != target_currency:
-                amount = convert_currency(ei.amount, from_currency, target_currency)
-            else:
-                amount = ei.amount
-            extras_income_list.append({
-                "date": ei.income_date,
-                "description": ei.description,
-                "amount": amount,
-                "extension": "",
-                "currency": from_currency.symbol if from_currency else target_currency.symbol if target_currency else "$",
-            })
-            
-        extra_expense_total = money(extras_expense_qs.aggregate(t=Sum('amount'))['t'] or 0)
-        extras_expense_list = []
-        for ee in extras_expense_qs.select_related("currency"):
-            from_currency = ee.currency or (get_currency_for_extension(ee.extension) if ee.extension else target_currency)
-            # Convertir vers la devise cible si nécessaire
-            if from_currency and from_currency != target_currency:
-                amount = convert_currency(ee.amount, from_currency, target_currency)
-            else:
-                amount = ee.amount
-            extras_expense_list.append({
-                "date": ee.expense_date,
-                "description": ee.description,
-                "amount": amount,
-                "extension": "",
-                "currency": from_currency.symbol if from_currency else target_currency.symbol if target_currency else "$",
-            })
-            
-        total_reste = money(total_reste_culte + extra_income_total - extra_expense_total)
-        
-        totals = {
-            "total_cultes": reports_filtered.count(),
-            "total_presence": total_presence,
-            "total_offrandes": total_offrandes,
-            "total_dimes": total_dimes,
-            "total_social": total_social,
-            "total_depenses": total_depenses,
-            "total_reste_culte": total_reste_culte,
-            "total_extras": extra_income_total,
-            "total_extra_expenses": extra_expense_total,
-            "total_reste": total_reste,
-        }
+    target = Currency.get_default() if is_consolidated or not selected_ext else get_currency_for_extension(selected_ext)
+    fields = {
+        "total_offrandes": "total_offerings", "total_dimes": "tithe_deduction",
+        "total_social": "social_deduction", "total_depenses": "total_expenses",
+        "total_reste_culte": "net_balance",
+    }
+    totals = {key: Decimal("0.00") for key in fields}
+    totals.update(total_cultes=0, total_presence=0)
+    # Evaluate THIS queryset so display annotations survive when templates iterate it.
+    reports_filtered = reports_filtered.select_related("currency", "extension__currency")
+    for report in reports_filtered:
+        source = get_record_currency(report)
+        totals["total_cultes"] += 1
+        totals["total_presence"] += report.total_attendance
+        for key, field in fields.items():
+            amount = convert_currency(getattr(report, field), source, target)
+            totals[key] += amount
+            setattr(report, field + "_disp", amount)
 
-    # Annoter les rapports pour l'affichage avec la devise correspondante
-    for r in reports_filtered.select_related("extension", "currency"):
-        if is_consolidated:
-            # En mode consolidé, convertir vers USD
-            from_currency = r.currency or get_currency_for_extension(r.extension)
-            usd_currency = Currency.get_default()
-            r.total_offerings_disp = convert_currency(r.total_offerings, from_currency, usd_currency)
-            r.tithe_deduction_disp = convert_currency(r.tithe_deduction, from_currency, usd_currency)
-            r.social_deduction_disp = convert_currency(r.social_deduction, from_currency, usd_currency)
-            r.total_expenses_disp = convert_currency(r.total_expenses, from_currency, usd_currency)
-            r.net_balance_disp = convert_currency(r.net_balance, from_currency, usd_currency)
-        else:
-            # En mode local, afficher dans la devise du rapport ou de l'extension
-            r.total_offerings_disp = r.total_offerings
-            r.tithe_deduction_disp = r.tithe_deduction
-            r.social_deduction_disp = r.social_deduction
-            r.total_expenses_disp = r.total_expenses
-            r.net_balance_disp = r.net_balance
+    def extras(queryset, date_field):
+        total = Decimal("0.00")
+        rows = []
+        for item in queryset.select_related("currency", "extension__currency"):
+            amount = convert_currency(item.amount, get_record_currency(item), target)
+            total += amount
+            rows.append({"date": getattr(item, date_field), "description": item.description,
+                         "amount": amount, "extension": item.extension.name if is_consolidated else "",
+                         "currency": target.symbol})
+        return total, rows
 
+    totals["total_extras"], extras_income_list = extras(extras_income_qs, "income_date")
+    totals["total_extra_expenses"], extras_expense_list = extras(extras_expense_qs, "expense_date")
+    totals["total_reste"] = money(totals["total_reste_culte"] + totals["total_extras"] - totals["total_extra_expenses"])
     return totals, selected_ext, is_consolidated, reports_filtered, extras_income_list, extras_expense_list
 
 

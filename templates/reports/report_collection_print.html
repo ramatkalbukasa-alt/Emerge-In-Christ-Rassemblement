@@ -233,7 +233,7 @@
       {% include "includes/brand_symbol.html" %}
       <div class="header-left">
         <h1>Registre des Rapports Pastoraux</h1>
-        <p>Ecclessia Manager — État Récapitulatif Consolidé</p>
+        <p>Ecclessia Manager — État Récapitulatif Consolidé — {{ display_currency.code }}</p>
       </div>
       <div class="header-right">
         <div>Date d'édition : <span id="current-date"></span></div>
@@ -261,11 +261,11 @@
             <td style="font-weight: 500;">{{ report.extension.name }}</td>
             <td>{{ report.get_service_type_display }}</td>
             <td class="font-mono-val">{{ report.total_attendance }}</td>
-            <td class="font-mono-val">{{ report.total_offerings }} FCFA</td>
-            <td class="font-mono-val">{{ report.tithe_deduction }} FCFA</td>
-            <td class="font-mono-val">{{ report.social_deduction }} FCFA</td>
+            <td class="font-mono-val">{{ report.total_offerings_disp|floatformat:2 }} {{ display_currency.code }}</td>
+            <td class="font-mono-val">{{ report.tithe_deduction_disp|floatformat:2 }} {{ display_currency.code }}</td>
+            <td class="font-mono-val">{{ report.social_deduction_disp|floatformat:2 }} {{ display_currency.code }}</td>
             <td class="font-mono-val font-semibold {% if report.net_balance >= 0 %}text-emerald{% else %}text-red{% endif %}">
-              {{ report.net_balance }} FCFA
+              {{ report.net_balance_disp|floatformat:2 }} {{ display_currency.code }}
             </td>
           </tr>
         {% empty %}
@@ -279,11 +279,11 @@
       <tfoot class="total-row">
         <tr>
           <td colspan="3" style="text-align: right; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Total Général</td>
-          <td id="total-presence" class="font-mono-val">0</td>
-          <td id="total-offrandes" class="font-mono-val">0 FCFA</td>
-          <td id="total-dimes" class="font-mono-val">0 FCFA</td>
-          <td id="total-social" class="font-mono-val">0 FCFA</td>
-          <td id="total-solde" class="font-mono-val">0 FCFA</td>
+          <td id="total-presence" class="font-mono-val">{{ totals.total_attendance }}</td>
+          <td id="total-offrandes" class="font-mono-val">{{ totals.total_offerings|floatformat:2 }} {{ display_currency.code }}</td>
+          <td id="total-dimes" class="font-mono-val">{{ totals.tithe_deduction|floatformat:2 }} {{ display_currency.code }}</td>
+          <td id="total-social" class="font-mono-val">{{ totals.social_deduction|floatformat:2 }} {{ display_currency.code }}</td>
+          <td id="total-solde" class="font-mono-val">{{ totals.net_balance|floatformat:2 }} {{ display_currency.code }}</td>
         </tr>
       </tfoot>
     </table>
@@ -310,37 +310,6 @@
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
       document.getElementById("current-date").textContent = new Date().toLocaleDateString('fr-FR', options);
 
-      // Total calculations
-      let presence = 0, offrandes = 0, dimes = 0, social = 0, solde = 0;
-
-      document.querySelectorAll("tbody tr").forEach(row => {
-        const cells = row.querySelectorAll("td");
-        if (cells.length < 8) return;
-
-        const getVal = (cell) => {
-          const txt = cell.textContent.replace(/[^0-9.-]/g, '');
-          return parseFloat(txt) || 0;
-        };
-
-        presence += getVal(cells[3]);
-        offrandes += getVal(cells[4]);
-        dimes += getVal(cells[5]);
-        social += getVal(cells[6]);
-        solde += getVal(cells[7]);
-      });
-
-      document.getElementById("total-presence").textContent = presence.toLocaleString('fr-FR');
-      document.getElementById("total-offrandes").textContent = offrandes.toLocaleString('fr-FR') + " FCFA";
-      document.getElementById("total-dimes").textContent = dimes.toLocaleString('fr-FR') + " FCFA";
-      document.getElementById("total-social").textContent = social.toLocaleString('fr-FR') + " FCFA";
-
-      const soldeTd = document.getElementById("total-solde");
-      soldeTd.textContent = solde.toLocaleString('fr-FR') + " FCFA";
-      if (solde >= 0) {
-        soldeTd.classList.add("text-emerald");
-      } else {
-        soldeTd.classList.add("text-red");
-      }
     });
   </script>
 </body>

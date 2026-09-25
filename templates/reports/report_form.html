@@ -78,6 +78,17 @@
       {% endfor %}
     </div>
 
+    <div class="mt-6 border-t border-black/10 pt-5" x-data="formsetManager('{{ income_formset.prefix }}')">
+      <h3 class="font-semibold">Entrées dans d’autres devises</h3>
+      <p class="mt-2 text-sm text-fg-muted">Les quatre montants ci-dessus sont exprimés dans la devise du rapport. Ajoutez ici les sommes reçues dans d’autres devises : elles seront converties puis ajoutées à leur catégorie. Ne les comptez pas une seconde fois dans les champs ci-dessus.</p>
+      {{ income_formset.management_form }}
+      {{ income_formset.non_form_errors }}
+      <div id="{{ income_formset.prefix }}-container" class="mt-4 space-y-3">
+        {% for income_line in income_formset %}{% include "reports/includes/income_line_form.html" %}{% endfor %}
+      </div>
+      <template id="{{ income_formset.prefix }}-empty">{% include "reports/includes/income_line_form.html" with income_line=income_formset.empty_form %}</template>
+      <button type="button" class="btn-secondary mt-4" @click="addForm()">Ajouter une entrée en devise</button>
+    </div>
     <!-- ── Panneau de prévisualisation financière ── -->
     <p id="preview-status" role="status" class="mt-4 text-sm text-fg-muted"></p>
     <div id="finance-preview" class="mt-6 rounded-xl border border-black/[0.08] bg-black/[0.03] p-4 text-sm hidden">
@@ -375,13 +386,14 @@ document.addEventListener('alpine:init', () => {
       const totalForms = document.getElementById('id_' + this.prefix + '-TOTAL_FORMS');
 
       const formCount    = parseInt(totalForms.value);
+      if (this.prefix === 'income_lines' && formCount >= 100) return;
       const newFormHtml  = emptyDiv.innerHTML.replace(/__prefix__/g, formCount);
       const newFormElement = document.createElement('div');
       newFormElement.innerHTML = newFormHtml;
 
       const row = newFormElement.firstElementChild;
       container.appendChild(row);
-      row.querySelector("input:not([type=hidden])")?.focus();
+      row.querySelector("select, input:not([type=hidden])")?.focus();
       totalForms.value = formCount + 1;
 
       // Déclencher la mise à jour de la prévisualisation après ajout
@@ -443,6 +455,14 @@ document.addEventListener('alpine:init', () => {
     previewRequest = new AbortController();
     const extId = extensionSelect ? extensionSelect.value : null;
     const payload = {
+      currency_id: $('id_currency')?.value || null,
+      income_lines: [...document.querySelectorAll('#income_lines-container .form-row')]
+        .filter(row => !row.querySelector('[name$="-DELETE"]')?.checked)
+        .map(row => ({
+          category: row.querySelector('[name$="-category"]').value,
+          amount: row.querySelector('[name$="-amount"]').value,
+          currency: row.querySelector('[name$="-currency"]').value,
+        })),
       extension_id:          extId ? parseInt(extId) : null,
       offering_regular:      parseFloat($('id_offering_regular')?.value)      || 0,
       offering_preacher:     parseFloat($('id_offering_preacher')?.value)     || 0,
@@ -484,16 +504,16 @@ document.addEventListener('alpine:init', () => {
 
     // Taux affichés
     const ratesEl = $('preview-rates');
-    if (ratesEl) ratesEl.textContent = `Dîme ${data.tithe_pct}% · Social ${data.social_pct}%`;
+    if (ratesEl) ratesEl.textContent = `${data.currency_code} · Dîme ${data.tithe_pct}% · Social ${data.social_pct}%`;
 
     const r = data.rows;
     const t = data.totals;
 
     // Montants bruts
-    const ord = parseFloat($('id_offering_regular')?.value)      || 0;
-    const ora = parseFloat($('id_offering_preacher')?.value)     || 0;
-    const dim = parseFloat($('id_offering_tithe')?.value)        || 0;
-    const agr = parseFloat($('id_offering_thanksgiving')?.value) || 0;
+    const ord = data.amounts.offering_regular;
+    const ora = data.amounts.offering_preacher;
+    const dim = data.amounts.offering_tithe;
+    const agr = data.amounts.offering_thanksgiving;
 
     // Ligne Ordinaires
     set('pv-ord-montant', fmt(ord));
@@ -546,6 +566,9 @@ document.addEventListener('alpine:init', () => {
 
   // Écouter le changement d'extension (changement de taux)
   if (extensionSelect) extensionSelect.addEventListener('change', triggerPreview);
+  $('id_currency')?.addEventListener('change', triggerPreview);
+  $('income_lines-container')?.addEventListener('input', triggerPreview);
+  $('income_lines-container')?.addEventListener('change', triggerPreview);
 
   // Écouter les dépenses via délégation sur le container
   const expensesContainer = document.getElementById('expenses-container');

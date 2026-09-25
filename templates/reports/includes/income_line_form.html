@@ -1,0 +1,14 @@
+<div class="form-row grid grid-cols-1 gap-3 rounded-xl border border-black/10 bg-stone-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
+  {% for hidden in income_line.hidden_fields %}{{ hidden }}{% endfor %}
+  {{ income_line.non_field_errors }}
+  {% for field in income_line.visible_fields %}
+  <div>
+    {% if field.name == 'DELETE' %}
+    <label class="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-red-700" for="{{ field.id_for_label }}">{{ field }} Supprimer cette entrée</label>
+    {% else %}
+    <label class="mb-2 block" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}{{ field.errors }}
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>

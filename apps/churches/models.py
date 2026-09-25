@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Currency(models.Model):
@@ -25,6 +26,16 @@ class Currency(models.Model):
     
     def __str__(self):
         return f"{self.code} - {self.name} ({self.symbol})"
+
+    def clean(self):
+        super().clean()
+        self.code = self.code.strip().upper()
+        if self.usd_rate is None or self.usd_rate <= 0:
+            raise ValidationError({"usd_rate": "Le taux doit être strictement positif."})
+        if self.code == "USD" and self.usd_rate != 1:
+            raise ValidationError({"usd_rate": "1 USD vaut toujours 1 USD : saisissez 1."})
+        if self.is_default and not self.is_active:
+            raise ValidationError({"is_active": "La devise administrateur doit être active."})
     
     @classmethod
     def get_default(cls):

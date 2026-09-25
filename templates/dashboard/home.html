@@ -138,6 +138,15 @@
   {% else %}<p class="text-red-700">Consolidation indisponible : une devise ou un taux de conversion nécessaire manque.</p>
   {% if user|application_admin or user.is_staff %}<a class="deco-action" href="{% url 'dashboard:administration' %}">Vérifier la configuration</a>{% else %}<p>Contactez votre administrateur pour vérifier la devise de votre extension.</p>{% endif %}{% endif %}
 </div>
+{% if financial_available and conversion_rates %}
+<details class="deco-mini-panel mt-6 text-sm">
+  <summary class="cursor-pointer font-semibold py-2">Devises et taux appliqués — {{ display_currency.code }}</summary>
+  <p class="mt-2 text-fg-muted">Les montants sont convertis avec les taux configurés dans l’administration. Ils ne sont pas actualisés automatiquement.</p>
+  <ul class="mt-2 space-y-1">
+    {% for conversion in conversion_rates %}<li>1 {{ conversion.source }} = {{ conversion.rate|floatformat:6 }} {{ display_currency.code }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
 <!-- ───── Charts Row ───── -->
 <section class="mt-8 grid gap-6 xl:grid-cols-3">
 
@@ -217,8 +226,8 @@
       <h2 class="font-display text-lg tracking-wide text-fg">Rapports récents</h2>
       <a href="{% url 'reports:list' %}" class="deco-action text-xs">Tout voir</a>
     </div>
-    <div class="overflow-x-auto flex-1" tabindex="0" role="region" aria-label="Rapports r?cents">
-      <table class="deco-table">
+    <div class="overflow-x-auto flex-1" tabindex="0" role="region" aria-label="Rapports récents">
+      <table class="deco-table recent-reports-table">
         <thead>
           <tr>
             <th scope="col" class="px-6 py-4">Date</th>
@@ -232,10 +241,10 @@
         <tbody>
           {% for report in recent_reports %}
             <tr>
-              <td class="px-6 py-4 font-mono text-xs text-fg-muted whitespace-nowrap">{{ report.service_date }}</td>
+              <td class="px-6 py-4 font-mono text-xs text-fg-muted whitespace-nowrap">{{ report.service_date|date:"d/m/Y" }}</td>
               <td class="px-6 py-4 font-semibold text-fg whitespace-nowrap">{{ report.extension.name }}</td>
               <td class="px-6 py-4 text-fg-muted font-mono">{{ report.total_attendance }}</td>
-              <td class="px-6 py-4 font-mono text-fg-muted whitespace-nowrap">{% if financial_available %}{{ report.dashboard_offerings|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</td>
+              <td class="px-6 py-4 font-mono text-fg-muted whitespace-nowrap">{% if financial_available %}{{ report.dashboard_offerings|money_format }} {{ display_currency.code }}<small class="block mt-1">Source : {{ report.total_offerings|money_format }} {{ report.source_currency.code }}</small>{% else %}Indisponible{% endif %}</td>
               <td class="px-6 py-4 font-mono font-semibold whitespace-nowrap {% if report.net_balance >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">{% if financial_available %}{{ report.dashboard_balance|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</td>
               <td class="px-6 py-4 text-right whitespace-nowrap">
                 <a class="deco-action" href="{% url 'reports:detail' report.pk %}">Voir</a>

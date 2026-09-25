@@ -63,6 +63,24 @@ def compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_percent
     }
 
 
+def prepare_income_lines(base_amounts, lines, target_currency):
+    """Convert validated receipts once, preserving the rate used for each line."""
+    from apps.churches.currency_service import convert_currency, get_exchange_rate, CurrencyConversionError
+    from .models import ReportIncomeLine
+    totals = {field: Decimal(str(base_amounts.get(field) or 0)) for field in ReportIncomeLine.Category.values}
+    prepared = []
+    for line in lines:
+        rate = get_exchange_rate(line.currency, target_currency)
+        converted = convert_currency(line.amount, line.currency, target_currency)
+        totals[line.category] += converted
+        line.exchange_rate = rate
+        line.converted_amount = converted
+        prepared.append(line)
+    if any(amount >= Decimal("10000000000") for amount in totals.values()) or sum(totals.values()) >= Decimal("10000000000"):
+        raise CurrencyConversionError("Le total converti dépasse la capacité du rapport. Répartissez les montants ou vérifiez les devises.")
+    return totals, prepared
+
+
 def convert_to_usd(amount, extension):
     """Convertit un montant de la devise locale de l'extension vers USD."""
     from apps.churches.currency_service import convert_currency, get_currency_for_extension
@@ -70,8 +88,6 @@ def convert_to_usd(amount, extension):
 
     from_currency = get_currency_for_extension(extension)
     usd = Currency.objects.filter(code="USD", is_active=True).first()
-    if not from_currency or not usd:
-        return money(amount)
     return money(convert_currency(amount, from_currency, usd))
 
 

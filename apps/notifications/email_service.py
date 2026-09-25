@@ -31,11 +31,11 @@ def send_report_submitted_email(report):
     admins = User.objects.filter(profile__role="admin").values_list("email", flat=True)
     recipients = [e for e in admins if e]
 
-    from apps.churches.currency_service import get_currency_for_extension
+    from apps.churches.currency_service import get_record_currency
 
     ext = report.extension
-    ext_currency = get_currency_for_extension(ext)
-    sym = ext_currency.symbol if ext_currency else "$"
+    ext_currency = get_record_currency(report)
+    sym = ext_currency.code if ext_currency else "Devise non renseignée"
 
     context = {
         "report": report,

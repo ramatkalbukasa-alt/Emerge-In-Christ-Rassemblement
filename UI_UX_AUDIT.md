@@ -1,5 +1,76 @@
 # Audit des interfaces — 24 septembre 2026
 
+## Devises et saisie multidevise — 25 septembre 2026
+
+- Colonne « Présence » du tableau de bord : largeur minimale et contenu non
+  sécable ; dates raccourcies. Vérification Chrome à 1440 px : colonne de 105 px,
+  libellé horizontal. Le tableau reste défilant dans sa carte.
+- Consolidation : chaque rapport, recette et dépense est converti avant la somme,
+  y compris lorsque plusieurs devises coexistent dans une seule extension.
+  Les lignes des bilans et leurs totaux utilisent la même devise cible.
+- Suppression des replis qui retournaient le montant d’origine ou un taux de 1
+  lorsqu’une devise manquait. Un taux nul/négatif ou un USD différent de 1 est
+  refusé ; un bilan impossible affiche une erreur explicite, sans total partiel.
+- Le rapport individuel utilise sa propre devise quand elle diffère de celle
+  de l’extension. Le code historique `tl` est reconnu comme `TRY`.
+- Le registre imprimable ne force plus FCFA et ses totaux sont calculés côté
+  serveur avec Decimal, sans relire des nombres français en JavaScript.
+  Les exports CSV identifient la devise d’origine ; le registre consolidé et
+  les bilans affichent la véritable devise administrateur, qui peut être USD
+  ou une autre devise configurée.
+- Les formulaires enregistrent explicitement la devise de l’extension si aucune
+  autre devise n’est choisie. Le changement de devise par défaut dans l’admin
+  désactive l’ancien choix par défaut.
+- Tableau de bord : montant source visible dans les rapports récents et détail
+  des taux appliqués. Ces taux sont configurés manuellement, pas récupérés en direct.
+
+### Plusieurs entrées dans un même culte
+
+Le formulaire conserve les quatre champs dans la devise du rapport et ajoute
+« Entrées dans d’autres devises ». Chaque ligne contient catégorie, montant et
+devise ; le bouton d’ajout permet de saisir deux, trois lignes ou davantage
+(limite de 100). Ne pas ressaisir ces lignes dans les quatre champs principaux.
+
+Les lignes sont converties puis ajoutées à leur catégorie avant ventilation.
+Le montant reçu, la devise, le taux appliqué et le montant converti sont conservés
+dans `ReportIncomeLine`. Ils apparaissent dans le détail, l’impression et les
+exports individuels. La sauvegarde du rapport et des lignes est atomique.
+Les recalculs ne rajoutent pas les lignes une seconde fois et ne réévaluent pas
+leurs taux historiques. La consolidation vers la devise administrateur utilise,
+comme précédemment, les taux actuellement configurés sur les montants comptabilisés.
+
+Dans l’administration Django, les lignes enregistrées sont en lecture seule ;
+la devise et les catégories financières d’un rapport contenant ces lignes sont
+également protégées pour éviter de désynchroniser les justificatifs et les totaux.
+
+### Contrôles et déploiement
+
+16 tests ciblés couvrent TRY→USD, conversion inverse, conversion via USD,
+arrondis, taux invalides, montants négatifs, devises historiques, devise propre
+au rapport, bilans mensuel/trimestriel/annuel, export consolidé, sauvegarde
+atomique et entrées multiples. Exemple à taux fictifs de test :
+1 000 TRY + 100 USD + 50 EUR = 7 500 TRY lorsque 1 TRY = 0,025 USD et
+1 EUR = 1,25 USD. Prévisualisation et enregistrement produisent le même résultat.
+La suite complète termine avec **43 tests réussis**, sans problème signalé par
+`manage.py check` ni migration manquante.
+
+La nouvelle migration `reports.0008_report_income_lines` a été appliquée
+localement. Au déploiement : `python manage.py migrate --noinput`, reconstruction
+Tailwind et `collectstatic` (déjà prévus dans le déploiement Render du projet).
+
+La commande **en lecture seule** `python manage.py audit_currencies` affiche la
+devise administrateur, les taux configurés et les incohérences possibles entre
+rapports, extensions et anciens codes. Elle est à exécuter aussi sur Render pour
+diagnostiquer les valeurs du site en ligne. La base locale vérifiée contient une
+extension TRY, un ancien code `tl` et un taux configuré de 0,031 USD par TRY ; ce
+n’est pas une validation du taux de marché ni de la configuration de production.
+Aucun ancien rapport ni taux existant n’a été réécrit automatiquement.
+
+Contrôles visuels : tableau de bord et formulaire aux six largeurs 320–1920 px,
+ajout de deux lignes sur mobile, associations des labels, absence d’exception
+JavaScript et de débordement de page. Captures locales :
+`tmp/ui-review/multi-currency-mobile.png` et `tmp/ui-review/presence-fixed.png`.
+
 ## Correction mobile — 25 septembre 2026
 
 Suite à la capture du registre sur téléphone : remplacement du tableau par des
