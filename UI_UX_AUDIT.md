@@ -1,5 +1,18 @@
 # Audit des interfaces — 24 septembre 2026
 
+## Correction mobile — 25 septembre 2026
+
+Suite à la capture du registre sur téléphone : remplacement du tableau par des
+cartes sous 768 px, avec date courte, extension, type de culte, présence,
+offrandes, solde, devise et lien vers le détail. Les trois actions occupent toute
+la largeur, avec « Nouveau rapport » en premier. Sur les écrans plus larges,
+le tableau conserve un défilement interne et ne découpe plus les mots des
+en-têtes, badges et montants.
+
+Validation : construction CSS, compilation des templates, contrôle de la liste
+à 320, 375, 768, 1024, 1440 et 1920 px sans débordement de page, inspection
+de la capture à 375 px et 12 tests Django du module dashboard réussis.
+
 ## Nouvelle revue et corrections
 
 Revue de tous les templates HTML et du socle CSS/JavaScript. Identité noir,

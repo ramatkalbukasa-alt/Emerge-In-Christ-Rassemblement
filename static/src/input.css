@@ -164,6 +164,13 @@ th, td { overflow-wrap: anywhere; }
 .chart-data summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: #a30700; font-weight: 600; }
 .chart-data table { width: 100%; font-variant-numeric: tabular-nums; }
 .chart-data th, .chart-data td { padding: 8px; text-align: left; border-bottom: 1px solid #e7e2dc; }
+.report-list-table table { min-width: 900px; }
+.report-list-table th, .report-list-table td { overflow-wrap: normal; }
+.report-list-table th, .report-list-table td:nth-child(n+3) { white-space: nowrap; }
+@media (max-width: 767px) {
+  .report-list-actions { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .report-list-actions .btn-primary { grid-row: 1; }
+}
 @media (max-width: 1023px) { .app-sidebar { width: min(272px, calc(100vw - 48px)); } }
 @media (pointer: coarse) { input, select, textarea, .form-control { font-size: 16px; } }
 @media (min-width: 768px) and (max-width: 1023px) {
