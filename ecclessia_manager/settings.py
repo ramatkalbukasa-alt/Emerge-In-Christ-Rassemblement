@@ -91,7 +91,14 @@ if REDIS_URL:
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {"hosts": [REDIS_URL]},
+            # Channels blocks for 5 seconds waiting for events. A client read
+            # timeout at that same boundary can disconnect healthy idle sockets.
+            "CONFIG": {"hosts": [{
+                "address": REDIS_URL,
+                "socket_connect_timeout": 5,
+                "socket_timeout": 15,
+                "socket_keepalive": True,
+            }]},
         }
     }
 else:

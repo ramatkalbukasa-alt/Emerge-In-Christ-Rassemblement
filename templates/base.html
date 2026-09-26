@@ -376,9 +376,11 @@
           socket: null,
           message: "",
           retryTimeout: null,
+          retryDelay: 1000,
           connect() {
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
             this.socket = new WebSocket(`${protocol}://${window.location.host}/ws/reports/`);
+            this.socket.onopen = () => { this.retryDelay = 1000; };
             this.socket.onmessage = (event) => {
               try {
                 const payload = JSON.parse(event.data);
@@ -392,7 +394,8 @@
               clearTimeout(this.retryTimeout);
               this.retryTimeout = setTimeout(() => {
                 this.connect();
-              }, 5000);
+              }, this.retryDelay + Math.random() * 1000);
+              this.retryDelay = Math.min(this.retryDelay * 2, 30000);
             };
             this.socket.onerror = () => {
               if (this.socket) this.socket.close();

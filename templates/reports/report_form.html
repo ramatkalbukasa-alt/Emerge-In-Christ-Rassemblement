@@ -471,6 +471,19 @@ document.addEventListener('alpine:init', () => {
       expenses: getExpenses(),
     };
 
+    // A newly added row is a normal editing state, not an invalid API request.
+    if (payload.income_lines.some(line => !line.category || !line.currency || !line.amount
+        || !Number.isFinite(Number(line.amount)) || Number(line.amount) <= 0)) {
+      $('finance-preview').classList.add('hidden');
+      $('preview-status').textContent = 'Complétez la catégorie, le montant positif et la devise de chaque entrée, ou cochez Supprimer.';
+      return;
+    }
+    if (!extId) {
+      $('finance-preview').classList.add('hidden');
+      $('preview-status').textContent = 'Sélectionnez une extension pour calculer la prévisualisation.';
+      return;
+    }
+
     fetch(PREVIEW_URL, {
       method:  'POST',
       signal: previewRequest.signal,
@@ -480,16 +493,29 @@ document.addEventListener('alpine:init', () => {
       },
       body: JSON.stringify(payload),
     })
-    .then(r => { if (!r.ok) throw new Error('Preview unavailable'); return r.json(); })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) {
+        const error = new Error('Preview unavailable');
+        error.userMessage = data.error;
+        throw error;
+      }
+      return data;
+    })
     .then(data => {
       if (currentRevision !== revision) return;
+      if (data.status === 'incomplete') {
+        $('finance-preview').classList.add('hidden');
+        $('preview-status').textContent = data.message;
+        return;
+      }
       updatePreview(data);
       $('preview-status').textContent = '';
     })
     .catch(error => {
       if (error.name === 'AbortError' || currentRevision !== revision) return;
       $('finance-preview').classList.add('hidden');
-      $('preview-status').textContent = 'Prévisualisation indisponible. Vous pouvez poursuivre la saisie ; les montants seront recalculés à l’enregistrement.';
+      $('preview-status').textContent = error.userMessage || 'Prévisualisation indisponible. Vous pouvez poursuivre la saisie ; les montants seront recalculés à l’enregistrement.';
     });
   }
 

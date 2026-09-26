@@ -33,6 +33,36 @@ class CurrencyRegressionTests(TestCase):
         UserProfile.objects.create(user=cls.member, extension=cls.ext)
         cls.report = ServiceReport.objects.create(extension=cls.ext, service_date="2026-09-16", currency=cls.try_, offering_regular=4000, papa_count=32)
 
+    def test_preview_incomplete_receipts_wait_without_partial_totals(self):
+        self.client.force_login(self.member)
+        for missing in ("amount", "category", "currency"):
+            line = {"amount": "100", "category": "offering_regular", "currency": self.usd.pk}
+            line[missing] = ""
+            with self.subTest(missing=missing):
+                response = self.client.post(reverse("reports:financial_preview"),
+                    data=json.dumps({"extension_id": self.ext.pk, "income_lines": [line]}),
+                    content_type="application/json")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["status"], "incomplete")
+                self.assertNotIn("totals", response.json())
+
+    def test_preview_rejects_invalid_completed_receipts(self):
+        self.client.force_login(self.member)
+        for amount in ("0", "-1", "NaN", "Infinity", "abc"):
+            with self.subTest(amount=amount):
+                response = self.client.post(reverse("reports:financial_preview"),
+                    data=json.dumps({"extension_id": self.ext.pk, "income_lines": [
+                        {"amount": amount, "category": "offering_regular", "currency": self.usd.pk}
+                    ]}), content_type="application/json")
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("error", response.json())
+
+    def test_preview_rejects_non_object_payload(self):
+        self.client.force_login(self.member)
+        response = self.client.post(reverse("reports:financial_preview"),
+            data="[]", content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+
     def test_pivot_forward_reverse_cross_currency_and_rounding(self):
         self.assertEqual(convert_currency(4000, "TRY", "USD"), Decimal("100.00"))
         self.assertEqual(convert_currency(100, "USD", "TRY"), Decimal("4000.00"))

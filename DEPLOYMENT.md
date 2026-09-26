@@ -162,6 +162,29 @@ les variables d'environnement Render doivent les contenir.
 | Page sans styles (CSS manquant) | `collectstatic` non exécuté ou build CSS raté | Vérifier les logs du Build ; `npm run build:css` doit s'exécuter avant `collectstatic` |
 | Boucle de redirection HTTPS infinie | Proxy externe ne transmet pas `X-Forwarded-Proto` | N'arrive pas via Render nativement ; si un CDN tiers est ajouté devant, il doit transmettre cet en-tête |
 | WebSocket (`/ws/reports/`) ne se connecte pas | `REDIS_URL` absent/incorrect | Vérifier que le service Redis est bien relié et que `REDIS_URL` est renseigné |
+| `redis.exceptions.TimeoutError: Timeout reading from red-…:6379` après une connexion WebSocket | Délai de lecture trop court ou indisponibilité Redis | Le client Redis 8 utilise par défaut 5 s, comme l’attente bloquante Channels. Le projet impose 15 s en lecture et 5 s à la connexion ; redéployer cette configuration. Si le problème persiste, vérifier l’état du service Key Value, son URL interne et la région du service web. |
+
+### Diagnostic Redis / temps réel
+
+La trace `CancelledError` puis `TimeoutError` dans `redis/asyncio/connection.py`
+correspond à l’expiration d’une lecture ; elle ne prouve pas à elle seule que
+Redis est arrêté. Un cas identique avec Redis 8 est documenté dans
+[channels_redis #422](https://github.com/django/channels_redis/issues/422).
+Pour vérifier la version du **client Python** installé dans le Shell Render :
+
+```bash
+python -c "import redis; print(redis.__version__)"
+```
+
+Utiliser l’URL interne de Key Value depuis le service web, dans la même région,
+selon la [documentation Render](https://render.com/docs/key-value).
+Ne pas publier `REDIS_URL`, qui peut contenir un mot de passe.
+
+Les notifications sont envoyées après validation de la transaction du rapport.
+Une panne Redis est journalisée sans annuler ce rapport. Le WebSocket ferme avec
+le code 1013 et le navigateur retente progressivement sa connexion. Les alertes
+temps réel manquées ne sont pas rejouées ; les rapports et notifications stockés
+restent accessibles en rechargeant la page.
 | 500 au démarrage | Migrations non appliquées | Le start command inclut déjà `python manage.py migrate` ; vérifier les logs de démarrage pour l'erreur exacte |
 
 ---

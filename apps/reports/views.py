@@ -125,6 +125,11 @@ def report_financial_preview(request):
         data = json.loads(request.body)
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "JSON invalide"}, status=400)
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Un objet JSON est attendu."}, status=400)
+
+    def incomplete(message):
+        return JsonResponse({"status": "incomplete", "message": message})
 
     def to_decimal(val):
         try:
@@ -156,8 +161,14 @@ def report_financial_preview(request):
         raw_lines = data.get("income_lines", [])
         if not isinstance(raw_lines, list) or len(raw_lines) > 100:
             raise ValueError("Nombre de lignes invalide")
+        if not target:
+            return incomplete("Sélectionnez une extension et une devise pour calculer la prévisualisation.")
         lines = []
         for item in raw_lines:
+            if not isinstance(item, dict):
+                raise ValueError("Chaque entrée doit être un objet JSON.")
+            if any(item.get(field) in (None, "") for field in ("amount", "category", "currency")):
+                return incomplete("Complétez la catégorie, le montant et la devise de chaque entrée.")
             amount = Decimal(str(item["amount"]))
             if not amount.is_finite() or amount <= 0 or item["category"] not in ReportIncomeLine.Category.values:
                 raise ValueError("Entrée invalide")
@@ -506,7 +517,7 @@ def report_create(request):
         except Exception:
             pass  # Ne pas bloquer la création du rapport si l'email échoue
 
-        publish_report_created(report)
+        transaction.on_commit(lambda: publish_report_created(report))
         return redirect("reports:detail", pk=report.pk)
 
     return render(request, "reports/report_form.html", {
