@@ -133,7 +133,7 @@
 <div class="dashboard-scope mt-4 text-sm text-fg-muted">
   <p>Les participations comptent les présences aux rencontres : une même personne peut être comptée plusieurs fois.</p>
   <p>Les rapports transmis correspondent aux rapports enregistrés, sans statut de validation distinct.</p>
-  <p>Le solde couvre les soldes nets des rapports ; les recettes et dépenses supplémentaires n’y sont pas incluses.</p>
+  <p>Le solde couvre les soldes nets des rapports ; les recettes et dépenses supplémentaires n’y sont pas incluses. Pour les nouveaux rapports, les parts du pasteur et des bénéficiaires sont suivies séparément.</p>
   {% if financial_available %}<p>Montants en {{ display_currency.code }}.{% if has_conversion %} Conversion selon les taux actuellement enregistrés dans le système.{% endif %}</p>
   {% else %}<p class="text-red-700">Consolidation indisponible : une devise ou un taux de conversion nécessaire manque.</p>
   {% if user|application_admin or user.is_staff %}<a class="deco-action" href="{% url 'dashboard:administration' %}">Vérifier la configuration</a>{% else %}<p>Contactez votre administrateur pour vérifier la devise de votre extension.</p>{% endif %}{% endif %}
@@ -186,7 +186,11 @@
     </div>
     <div class="mt-4 space-y-2 text-xs text-fg-muted">
       <div class="flex items-center justify-between">
-        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-accent"></span>Dîmes transmises</span>
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>Pasteur et bénéficiaires</span>
+        <span class="font-mono font-semibold text-fg">{% if financial_available %}{{ totals.beneficiaries|money_format }} {{ display_currency.code }}{% else %}Indisponible{% endif %}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-accent"></span>Prélèvements de dîme</span>
         <span class="font-mono font-semibold text-fg">{% if financial_available %}{{ totals.tithe|money_format }} <span class="currency-code">{{ display_currency.code }}</span>{% else %}Indisponible{% endif %}</span>
       </div>
       <div class="flex items-center justify-between">
@@ -381,8 +385,8 @@
     new Chart(ventCanvas, {
       type: 'doughnut',
       data: {
-        labels: ['Dîmes', 'Social', 'Solde'],
-        datasets: [{ data: ventData, backgroundColor: [RED, GOLD, SLATE], borderWidth: 0, hoverOffset: 6 }],
+        labels: ['Prélèvements de dîme', 'Social', 'Solde extension', 'Pasteur et bénéficiaires'],
+        datasets: [{ data: ventData, backgroundColor: [RED, GOLD, SLATE, '#3b82f6'], borderWidth: 0, hoverOffset: 6 }],
       },
       options: {
         responsive: true,

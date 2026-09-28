@@ -124,6 +124,7 @@ class FinancialLogicTestCase(TestCase):
         report = ServiceReport.objects.create(
             extension=self.extension,
             service_date="2026-06-25",
+            financial_version=1,  # Preserve coverage of the historical calculation.
             offering_regular=Decimal("860"),
             offering_preacher=Decimal("300"),
             offering_tithe=Decimal("500"),
@@ -163,6 +164,7 @@ class FinancialLogicTestCase(TestCase):
         new_report = ServiceReport.objects.create(
             extension=self.extension,
             service_date="2026-06-26",
+            financial_version=1,
             offering_regular=Decimal("1000")
         )
         self.assertEqual(new_report.tithe_percentage_snapshot, Decimal("12"))

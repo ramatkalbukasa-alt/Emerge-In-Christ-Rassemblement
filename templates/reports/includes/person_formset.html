@@ -1,0 +1,10 @@
+<section class="deco-card p-6" x-data="formsetManager('{{ registry_formset.prefix }}')">
+  <h2 class="font-display text-base uppercase tracking-[0.18em] text-accent-bright mb-3">{{ registry_title }}</h2>
+  <p class="text-sm text-fg-muted mb-4">Choisissez une fiche existante ou renseignez un nouveau nom. Une personne déjà enregistrée ne sera pas recomptée dans cette catégorie.</p>
+  {{ registry_formset.management_form }}{{ registry_formset.non_form_errors }}
+  <div id="{{ registry_formset.prefix }}-container" class="space-y-3">
+    {% for entry in registry_formset %}{% include "reports/includes/person_form.html" %}{% endfor %}
+  </div>
+  <template id="{{ registry_formset.prefix }}-empty">{% include "reports/includes/person_form.html" with entry=registry_formset.empty_form %}</template>
+  <button type="button" class="btn-secondary mt-4" @click="addForm()">Ajouter une personne</button>
+</section>

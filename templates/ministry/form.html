@@ -1,0 +1,9 @@
+{% extends "ministry/base.html" %}
+{% block ministry_content %}
+<header class="mb-6"><p class="deco-kicker">Gestion de l’extension</p><h1 class="deco-heading mt-2">{{ title }}</h1>{% if note %}<p class="mt-3 text-fg-muted">{{ note }}</p>{% endif %}</header>
+{% if matches %}<aside class="deco-card p-5 mb-5" aria-label="Correspondances possibles"><h2 class="font-semibold">Fiches similaires à vérifier</h2><ul>{% for person in matches %}<li><a class="ministry-link" href="{% url 'ministry:person_detail' person.pk %}">{{ person.full_name }} — {{ person.phone|default:'Sans téléphone' }}</a></li>{% endfor %}</ul></aside>{% endif %}
+<form method="post" class="deco-card p-6">{% csrf_token %}
+  {% include "ministry/fields.html" %}
+  <div class="ministry-actions mt-6"><button class="btn-primary" type="submit">Enregistrer</button><a class="btn-secondary" href="{% url 'ministry:people' %}">Retour aux registres</a></div>
+</form>
+{% endblock %}

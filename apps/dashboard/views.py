@@ -48,6 +48,7 @@ def home(request):
     grouped = {}
     fields = {"offerings": "total_offerings", "balance": "net_balance", "tithe": "tithe_deduction", "social": "social_deduction"}
     totals.update({key: Decimal("0") for key in fields})
+    totals["beneficiaries"] = Decimal("0")
     for report in reports.select_related("currency", "extension__currency").iterator():
         if len(recent_reports) < 8:
             recent_reports.append(report)
@@ -61,6 +62,9 @@ def home(request):
         try:
             rate = get_exchange_rate(source, display_currency)
             amounts = {key: convert_currency(getattr(report, field), source, display_currency) for key, field in fields.items()}
+            if report.financial_version >= 2:
+                v = report.ventilation()
+                amounts["beneficiaries"] = convert_currency(sum(v[k]["reste"] for k in ("dimes", "actions_grace", "orateur")), source, display_currency)
         except CurrencyConversionError:
             financial_available = False
             continue
@@ -75,6 +79,7 @@ def home(request):
     if not financial_available:
         # Never present a partial consolidation as the global balance.
         totals.update({key: None for key in fields})
+        totals["beneficiaries"] = None
         for row in grouped.values():
             row["total"] = None
     by_extension = sorted(grouped.values(), key=lambda row: -(row["total"] or 0))[:8]
@@ -116,6 +121,6 @@ def home(request):
             "chart_ext_labels": json.dumps(ext_labels),
             "chart_ext_attendance": json.dumps(ext_attendance),
             "chart_ext_offerings": json.dumps(ext_offerings),
-            "chart_ventilation": json.dumps([tithe_val, social_val, max(balance_val, 0)]),
+            "chart_ventilation": json.dumps([tithe_val, social_val, max(balance_val, 0), float(totals["beneficiaries"] or 0)]),
         },
     )

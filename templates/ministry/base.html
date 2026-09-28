@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title|default:"Registres et caisses" }} — Ecclessia Manager{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/ministry.css' %}">
+<div class="ministry">
+{% include "ministry/nav.html" %}
+{% block ministry_content %}{% endblock %}
+</div>
+{% endblock %}

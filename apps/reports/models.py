@@ -9,6 +9,9 @@ from .services import compute_ventilation, money
 
 
 class ServiceReport(models.Model):
+    financial_version = models.PositiveSmallIntegerField(default=2, editable=False)
+    financial_snapshot = models.JSONField(default=dict, editable=False)
+    thanksgiving_beneficiary = models.CharField("Bénéficiaire des actions de grâce", max_length=160, blank=True)
     class ServiceType(models.TextChoices):
         SUNDAY = "sunday", "Culte dominical"
         WEEK = "week", "Culte de semaine"
@@ -154,17 +157,16 @@ class ServiceReport(models.Model):
         # Fallback : valeurs par défaut
         return Decimal("10"), Decimal("10")
 
+    def ventilation(self):
+        tithe_pct, social_pct = self._get_rates()
+        return compute_ventilation(self.offering_regular, self.offering_preacher,
+            self.offering_tithe, self.offering_thanksgiving, tithe_pct, social_pct,
+            policy=self.financial_snapshot if self.financial_version >= 2 else None)
+
     def recalculate(self):
         """Recalcule tous les champs agrégés sans sauvegarder."""
         tithe_pct, social_pct = self._get_rates()
-        ventilation = compute_ventilation(
-            self.offering_regular,
-            self.offering_preacher,
-            self.offering_tithe,
-            self.offering_thanksgiving,
-            tithe_pct,
-            social_pct,
-        )
+        ventilation = self.ventilation()
         self.total_attendance = (
             self.papa_count
             + self.maman_count
@@ -181,11 +183,25 @@ class ServiceReport(models.Model):
         self.tithe_deduction  = ventilation["total_dime"]
         self.social_deduction = ventilation["total_social"]
         self.net_balance = money(
-            ventilation["offering_remainder"]
+            ventilation["extension_remainder"]
             - self.total_expenses
         )
 
     def save(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        from django.db import transaction
+        from apps.ministry.services import policy_for, sync_allocations
+        if self._state.adding and self.financial_version >= 2:
+            if any(Decimal(str(getattr(self, field))) < 0 for field in ("offering_regular", "offering_preacher", "offering_tithe", "offering_thanksgiving")):
+                raise ValidationError("Les recettes ne peuvent pas être négatives.")
+            self.financial_snapshot = policy_for(self.extension)
+            from apps.churches.currency_service import get_record_currency
+            self.currency = get_record_currency(self)
+        if not self._state.adding and self.financial_version >= 2:
+            old = type(self).objects.get(pk=self.pk)
+            immutable = ["extension_id", "currency_id", "service_date", "offering_regular", "offering_preacher", "offering_tithe", "offering_thanksgiving", "financial_snapshot", "thanksgiving_beneficiary", "preacher"]
+            if any(self._meta.get_field(field).to_python(getattr(old, field)) != self._meta.get_field(field).to_python(getattr(self, field)) for field in immutable):
+                raise ValidationError("Les recettes déjà affectées aux caisses sont figées. Enregistrez une opération distincte.")
         # Figer les taux de l'extension au premier save uniquement
         if not self.pk and self.extension_id:
             try:
@@ -195,7 +211,9 @@ class ServiceReport(models.Model):
             except ChurchExtension.DoesNotExist:
                 pass
         self.recalculate()
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            sync_allocations(self)
 
     def refresh_totals(self):
         """Recalcule les totaux des lignes et sauvegarde. Appelé après ajout/modif de lignes."""
@@ -326,6 +344,7 @@ class ExtraExpense(models.Model):
 
 
 class NewConvert(models.Model):
+    person = models.ForeignKey("ministry.Person", null=True, blank=True, on_delete=models.PROTECT, verbose_name="Personne déjà enregistrée")
     report = models.ForeignKey(
         ServiceReport,
         on_delete=models.CASCADE,
@@ -348,6 +367,7 @@ class NewConvert(models.Model):
 
 
 class Newcomer(models.Model):
+    person = models.ForeignKey("ministry.Person", null=True, blank=True, on_delete=models.PROTECT, verbose_name="Personne déjà enregistrée")
     report = models.ForeignKey(
         ServiceReport,
         on_delete=models.CASCADE,

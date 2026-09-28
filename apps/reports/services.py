@@ -10,8 +10,12 @@ def money(value):
     return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_percentage, social_percentage):
-    """Calcule la ventilation des offrandes.
+def compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_percentage, social_percentage, policy=None):
+    """Calcule la ventilation des offrandes, historique ou par catégorie.
+
+    Avec ``policy``, appliquer les taux figés propres à chaque catégorie sur le
+    brut ; seul le reste des ordinaires alimente ``extension_remainder``.
+    Sans ``policy``, conserver exactement les règles historiques ci-dessous.
 
     Les offrandes pour l'orateur ne subissent aucun prélèvement (reste = 100%).
     Les dîmes subissent 100% de prélèvement dîme (dîme = 100%, social = 0%, reste = 0%).
@@ -39,6 +43,18 @@ def compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_percent
     dimes_v         = calc_dimes(dimes)
     actions_grace_v = calc(actions_grace)
 
+    if policy is not None:
+        def allocate(amount, prefix):
+            amount = money(amount)
+            dime = money(amount * Decimal(policy[prefix + "_tithe"]) / 100)
+            social = money(amount * Decimal(policy[prefix + "_social"]) / 100)
+            # At the half-cent boundary ensure rounded allocations never exceed the gross.
+            social = min(social, amount - dime)
+            return {"dime": dime, "social": social, "reste": money(amount - dime - social)}
+        ordinaires_v = allocate(ordinaires, "regular")
+        dimes_v = allocate(dimes, "tithe")
+        actions_grace_v = allocate(actions_grace, "thanks")
+
     total_dime = money(
         ordinaires_v["dime"] + dimes_v["dime"] + actions_grace_v["dime"]
     )
@@ -60,6 +76,7 @@ def compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_percent
         "total_dime":    total_dime,
         "total_social":  total_social,
         "offering_remainder": offering_remainder,
+        "extension_remainder": ordinaires_v["reste"] if policy is not None else offering_remainder,
     }
 
 

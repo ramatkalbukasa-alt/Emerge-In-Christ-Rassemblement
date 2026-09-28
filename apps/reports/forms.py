@@ -10,6 +10,8 @@ from .models import Expense, ExtraIncome, ExtraExpense, NewConvert, Newcomer, Se
 class RecordCurrencyForm(forms.ModelForm):
     def clean(self):
         data = super().clean()
+        if data.get("amount") is not None and data["amount"] < 0:
+            self.add_error("amount", "Le montant ne peut pas être négatif.")
         if not data.get("currency") and data.get("extension"):
             from apps.churches.currency_service import get_currency_for_extension
             data["currency"] = get_currency_for_extension(data["extension"])
@@ -19,6 +21,20 @@ class RecordCurrencyForm(forms.ModelForm):
 
 
 class ServiceReportForm(RecordCurrencyForm):
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        from apps.ministry.services import policy_for
+        data = super().clean()
+        for field in ReportIncomeLine.Category.values:
+            if data.get(field) is not None and data[field] < 0:
+                self.add_error(field, "Le montant ne peut pas être négatif.")
+        if data.get("extension"):
+            try:
+                policy_for(data["extension"])
+            except ValidationError as exc:
+                self.add_error(None, exc)
+        return data
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -51,6 +67,7 @@ class ServiceReportForm(RecordCurrencyForm):
             "offering_preacher",
             "offering_tithe",
             "offering_thanksgiving",
+            "thanksgiving_beneficiary",
         ]
         widgets = {
             "service_date": forms.DateInput(attrs={"type": "date"}),
@@ -68,6 +85,12 @@ class ServiceReportForm(RecordCurrencyForm):
 
 
 class ExpenseForm(forms.ModelForm):
+    def clean_amount(self):
+        amount = self.cleaned_data["amount"]
+        if amount < 0:
+            raise forms.ValidationError("Une dépense ne peut pas être négative.")
+        return amount
+
     class Meta:
         model = Expense
         fields = ["amount", "reason"]
@@ -152,26 +175,46 @@ class ExtraExpenseForm(RecordCurrencyForm):
         }
 
 
-class NewConvertForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+class RegistryPersonForm(forms.ModelForm):
+    confirm_distinct = forms.BooleanField(required=False, label="Fiche similaire vérifiée : personne distincte")
+
+    def __init__(self, *args, people=None, **kwargs):
         super().__init__(*args, **kwargs)
+        from apps.ministry.models import Person
+        self.fields["person"].queryset = people if people is not None else Person.objects.none()
+        self.fields["full_name"].required = False
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")
+
+    def clean(self):
+        from apps.ministry.models import normalized
+        data = super().clean()
+        if data.get("person"):
+            person = data["person"]
+            data["full_name"] = person.full_name
+            if "phone" in self.fields:
+                data["phone"] = person.phone
+                data["address"] = person.address
+        elif data.get("full_name"):
+            matches = self.fields["person"].queryset.filter(name_key=normalized(data["full_name"]))
+            if matches.exists() and not data.get("confirm_distinct"):
+                self.add_error("person", "Une fiche de même nom existe : sélectionnez-la ou confirmez qu’il s’agit d’une autre personne.")
+        elif not data.get("DELETE"):
+            self.add_error("full_name", "Renseignez un nom ou sélectionnez une personne existante.")
+        return data
+
+
+class NewConvertForm(RegistryPersonForm):
 
     class Meta:
         model = NewConvert
-        fields = ["full_name", "phone", "address", "follow_up_owner"]
+        fields = ["person", "full_name", "phone", "address", "follow_up_owner"]
 
 
-class NewcomerForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "form-control")
-
+class NewcomerForm(RegistryPersonForm):
     class Meta:
         model = Newcomer
-        fields = ["full_name", "invited_by"]
+        fields = ["person", "full_name", "invited_by"]
 
 
 NewConvertFormSet = inlineformset_factory(
