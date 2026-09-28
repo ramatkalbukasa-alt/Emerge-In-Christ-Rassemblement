@@ -389,8 +389,8 @@
         <tr>
           <th scope="col" style="text-align:left;width:34%">Type de recette</th>
           <th scope="col">Montant ({{ sym }})</th>
-          <th scope="col">Dîme {{ report.tithe_percentage_snapshot|floatformat:0 }}%</th>
-          <th scope="col">Social ({{ report.social_percentage_snapshot|floatformat:0 }}%)</th>
+          <th scope="col">Dîme{% if report.financial_version == 1 %} {{ report.tithe_percentage_snapshot|floatformat:0 }}%{% endif %}</th>
+          <th scope="col">Social{% if report.financial_version == 1 %} ({{ report.social_percentage_snapshot|floatformat:0 }}%){% endif %}</th>
           <th scope="col">Reste</th>
         </tr>
       </thead>
@@ -476,7 +476,7 @@
       <div>
         <div class="section-title" style="margin:0 0 8px 0;display:inline-block;padding:4px 12px;">Reste Final</div>
         <div class="reste-box">
-          <div class="lbl-reste">Solde disponible</div>
+          <div class="lbl-reste">{% if report.financial_version >= 2 %}Solde de l’extension (hors pasteur et bénéficiaires){% else %}Solde disponible — règle historique{% endif %}</div>
           <div class="val-reste {% if report.net_balance < 0 %}negative{% endif %}">
             {{ currency_symbol }} {{ report.net_balance|floatformat:2 }}
           </div>

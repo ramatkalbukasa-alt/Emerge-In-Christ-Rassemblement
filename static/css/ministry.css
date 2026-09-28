@@ -1,0 +1,26 @@
+.ministry { min-width: 0; }
+.ministry-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #b7b7b74d; }
+.ministry-nav a,.ministry-nav summary { display: inline-flex; align-items: center; min-height: 44px; padding: .6rem .85rem; border-radius: .5rem; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.ministry-nav a:hover,.ministry-nav summary:hover { background: #88888818; }
+.ministry-nav details { position: relative; }
+.ministry-nav details > div { position: absolute; z-index: 20; min-width: 240px; max-width: calc(100vw - 40px); padding: .5rem; background: #fff; color: #202620; box-shadow: 0 8px 24px #0002; border: 1px solid #ddd; border-radius: .7rem; }
+.ministry-nav details > div a { display: flex; }
+.ministry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.ministry-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 1.25rem; }
+.ministry-field { min-width: 0; }
+.ministry-field label { display: block; margin-bottom: .4rem; }
+.ministry-field input:not([type=checkbox]),.ministry-field select,.ministry-field textarea { width: 100%; min-height: 44px; }
+.ministry-field input[type=checkbox] { margin-right: .4rem; }
+.ministry-field #id_names label { padding: .65rem; }
+.ministry-totals { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,200px),1fr)); gap: 1rem; }
+.ministry-table-scroll { overflow-x: auto; border-radius: .75rem; }
+.ministry-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.ministry-table th,.ministry-table td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid #8883; min-width: 105px; max-width: 320px; overflow-wrap: anywhere; }
+.ministry-table th { font-weight: 700; background: #88888812; }
+.ministry-table tbody tr:hover { background: #88888808; }
+.ministry-link { display: inline-block; padding: .65rem .15rem; text-decoration: underline; text-underline-offset: .2em; font-weight: 600; }
+.ministry-note { font-size: .875rem; line-height: 1.6; color: #62665f; }
+.ministry-entry { padding: 1rem 0; border-bottom: 1px solid #8883; line-height: 1.8; }
+.ministry :focus-visible { outline: 2px solid #16a34a; outline-offset: 3px; }
+@media(max-width:640px) { .ministry-nav details { position: static; } .ministry-nav details > div { left: 20px; right: 20px; } .ministry .deco-heading { font-size: 1.8rem; overflow-wrap: anywhere; } }
+@media print { .ministry-nav,.ministry-filters,.ministry-actions,form { display: none!important; } .ministry-table-scroll { overflow: visible; } }

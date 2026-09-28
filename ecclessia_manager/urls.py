@@ -21,5 +21,6 @@ urlpatterns = [
     path("", include("apps.dashboard.urls")),
     path("extensions/", include("apps.churches.urls")),
     path("rapports/", include("apps.reports.urls")),
+    path("gestion/", include("apps.ministry.urls")),
     path("notifications/", include("apps.notifications.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

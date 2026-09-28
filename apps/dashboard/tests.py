@@ -66,6 +66,7 @@ class DashboardScopeTests(TestCase):
         self.assertEqual(self.client.get(reverse("reports:detail", args=[self.second.pk])).status_code, 404)
 
     def test_missing_currency_never_exposes_a_partial_total(self):
+        ServiceReport.objects.filter(pk=self.first.pk).update(currency=None)
         ChurchExtension.objects.filter(pk=self.local.pk).update(currency=None, currency_code_legacy="")
         response = self.dashboard(self.admin)
         self.assertFalse(response.context["financial_available"])

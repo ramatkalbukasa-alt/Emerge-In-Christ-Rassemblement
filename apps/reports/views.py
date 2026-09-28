@@ -80,6 +80,19 @@ def _report_rows(report):
         ("Solde net du culte", _money(report.net_balance)),
     ]
 
+    if report.financial_version >= 2:
+        v = report.ventilation()
+        rows.extend([
+            ("Règle financière", "Répartition par catégorie, taux figés à l’enregistrement"),
+            ("Part du pasteur sur les dîmes", _money(v["dimes"]["reste"])),
+            ("Part du bénéficiaire des actions de grâce", _money(v["actions_grace"]["reste"])),
+            ("Bénéficiaire des actions de grâce", report.thanksgiving_beneficiary or "À renseigner"),
+            ("Part de l’orateur", _money(v["orateur"]["reste"])),
+            ("Périmètre du solde", "Caisse de l’extension, hors pasteur et bénéficiaires"),
+        ])
+        for prefix, label in [("regular", "Ordinaires"), ("tithe", "Dîmes reçues"), ("thanks", "Actions de grâce")]:
+            rows.append((label + " — taux dîme / social", f"{report.financial_snapshot[prefix + '_tithe']} % / {report.financial_snapshot[prefix + '_social']} %"))
+
     for line in report.income_lines.select_related("currency"):
         rows.append(("Entrée — " + line.get_category_display(),
                      f"{line.amount} {line.currency.code} × {line.exchange_rate} = {line.converted_amount} {get_record_currency(report).code}"))
@@ -93,15 +106,7 @@ def _get_ventilation(report):
     rapport, de sorte que l'historique reste stable même après une modification
     des paramètres de l'extension.
     """
-    from .services import compute_ventilation
-    return compute_ventilation(
-        report.offering_regular,
-        report.offering_preacher,
-        report.offering_tithe,
-        report.offering_thanksgiving,
-        report.tithe_percentage_snapshot,
-        report.social_percentage_snapshot,
-    )
+    return report.ventilation()
 
 
 @login_required
@@ -131,16 +136,27 @@ def report_financial_preview(request):
     def incomplete(message):
         return JsonResponse({"status": "incomplete", "message": message})
 
+    invalid_amounts = []
     def to_decimal(val):
         try:
-            return money(max(Decimal("0"), Decimal(str(val or 0))))
+            amount = Decimal(str(val or 0))
+            if not amount.is_finite() or amount < 0:
+                raise ValueError
+            return money(amount)
         except Exception:
+            invalid_amounts.append(True)
             return Decimal("0")
 
     # Récupérer les taux de l'extension
     tithe_pct  = Decimal("10")
     social_pct = Decimal("10")
     extension_id = data.get("extension_id")
+    if not user_is_admin(request.user):
+        own_extension = user_extension(request.user)
+        if not own_extension or (extension_id and str(extension_id) != str(own_extension.pk)):
+            return JsonResponse({"error": "Extension non autorisée."}, status=403)
+        extension_id = own_extension.pk
+    ext = None
     if extension_id:
         try:
             ext = ChurchExtension.objects.get(pk=int(extension_id))
@@ -184,15 +200,26 @@ def report_financial_preview(request):
     except (CurrencyConversionError, ValueError, TypeError, KeyError, ArithmeticError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     expenses_raw  = data.get("expenses", [])
+    if not isinstance(expenses_raw, list):
+        return JsonResponse({"error": "Une liste de dépenses est attendue."}, status=400)
 
     total_expenses = money(sum(
         to_decimal(e) for e in expenses_raw if e is not None
     ))
+    if invalid_amounts:
+        return JsonResponse({"error": "Les montants doivent être des nombres positifs ou nuls."}, status=400)
 
-    v = compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_pct, social_pct)
+    from apps.ministry.services import policy_for
+    if not ext:
+        return incomplete("Sélectionnez une extension valide.")
+    from django.core.exceptions import ValidationError
+    try:
+        v = compute_ventilation(ordinaires, orateur, dimes, actions_grace, tithe_pct, social_pct, policy=policy_for(ext))
+    except ValidationError as exc:
+        return JsonResponse({"error": "; ".join(exc.messages)}, status=400)
 
     total_recettes = money(ordinaires + orateur + dimes + actions_grace)
-    reste_final    = money(v["offering_remainder"] - total_expenses)
+    reste_final    = money(v["extension_remainder"] - total_expenses)
 
     def fmt(d):
         return str(d)
@@ -444,12 +471,37 @@ def report_create(request):
     expense_formset = ExpenseFormSet(request.POST or None, prefix="expenses")
     newcomer_formset = NewcomerFormSet(request.POST or None, prefix="newcomers")
     new_convert_formset = NewConvertFormSet(request.POST or None, prefix="converts")
+    from apps.ministry.models import Person
+    from apps.ministry.services import scoped
+    from django.core.exceptions import PermissionDenied
+    if not user_is_admin(request.user) and not user_extension(request.user):
+        raise PermissionDenied
+    people = scoped(Person.objects.filter(is_active=True), request.user)
+    selected_extension = request.POST.get("extension") if user_is_admin(request.user) else user_extension(request.user).pk
+    if selected_extension:
+        people = people.filter(extension_id=selected_extension) if str(selected_extension).isdigit() else people.none()
+    for formset in (newcomer_formset, new_convert_formset):
+        formset.form_kwargs["people"] = people
+        for entry_form in formset.forms:
+            entry_form.fields["person"].queryset = people
 
     if not user_is_admin(request.user):
         form.fields["extension"].disabled = True
         form.fields["extension"].required = False
 
     valid = all([form.is_valid(), expense_formset.is_valid(), newcomer_formset.is_valid(), new_convert_formset.is_valid(), income_formset.is_valid()])
+    if valid:
+        from apps.ministry.models import normalized
+        seen_names = set()
+        for formset in (newcomer_formset, new_convert_formset):
+            for entry in formset.forms:
+                data = entry.cleaned_data
+                if data and not data.get("DELETE") and not data.get("person"):
+                    key = normalized(data.get("full_name", ""))
+                    if key in seen_names and not data.get("confirm_distinct"):
+                        entry.add_error("person", "Ce nom apparaît plusieurs fois. Créez d’abord sa fiche dans le registre et sélectionnez-la dans les deux catégories, ou confirmez des personnes distinctes.")
+                        valid = False
+                    seen_names.add(key)
     prepared_lines = []
     if valid:
         try:

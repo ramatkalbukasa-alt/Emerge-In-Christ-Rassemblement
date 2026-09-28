@@ -2,6 +2,22 @@ from django.contrib import admin
 
 from .models import Expense, ExtraIncome, ExtraExpense, NewConvert, Newcomer, ServiceReport
 from .models import ReportIncomeLine
+from .permissions import user_is_admin
+
+
+class ScopedFinancialAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        from apps.ministry.services import scoped
+        return scoped(super().get_queryset(request), request.user)
+
+    def has_add_permission(self, request):
+        return user_is_admin(request.user) and super().has_add_permission(request)
+
+    def has_change_permission(self, request, obj=None):
+        return user_is_admin(request.user) and super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return user_is_admin(request.user) and super().has_delete_permission(request, obj)
 
 
 class ReportIncomeLineInline(admin.TabularInline):
@@ -33,7 +49,7 @@ class NewcomerInline(admin.TabularInline):
 
 
 @admin.register(ServiceReport)
-class ServiceReportAdmin(admin.ModelAdmin):
+class ServiceReportAdmin(ScopedFinancialAdmin):
     list_display = [
         "service_date", "extension", "service_type",
         "total_attendance", "total_offerings", "total_expenses", "net_balance",
@@ -49,8 +65,9 @@ class ServiceReportAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         fields = list(super().get_readonly_fields(request, obj))
-        if obj and obj.income_lines.exists():
+        if obj and (obj.financial_version >= 2 or obj.income_lines.exists()):
             fields += ["currency", "extension", "offering_regular", "offering_preacher", "offering_tithe", "offering_thanksgiving"]
+            fields += ["service_date", "preacher", "thanksgiving_beneficiary"]
         return fields
 
     def save_related(self, request, form, formsets, change):
@@ -83,12 +100,12 @@ class ServiceReportAdmin(admin.ModelAdmin):
 
 
 @admin.register(ExtraIncome)
-class ExtraIncomeAdmin(admin.ModelAdmin):
+class ExtraIncomeAdmin(ScopedFinancialAdmin):
     list_display = ["income_date", "extension", "amount", "description"]
     list_filter = ["extension", "income_date"]
 
 
 @admin.register(ExtraExpense)
-class ExtraExpenseAdmin(admin.ModelAdmin):
+class ExtraExpenseAdmin(ScopedFinancialAdmin):
     list_display = ["expense_date", "extension", "amount", "description"]
     list_filter = ["extension", "expense_date"]

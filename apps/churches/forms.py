@@ -32,8 +32,6 @@ class ChurchExtensionForm(forms.ModelForm):
             "secretary",
             "treasurer",
             "currency",
-            "tithe_percentage",
-            "social_percentage",
             "is_active",
         ]
         widgets = {

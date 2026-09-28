@@ -6,6 +6,7 @@
   <p class="deco-kicker">Extension</p>
   <h1 class="deco-heading mt-2">{{ title }}</h1>
   <p class="mt-1 text-sm text-fg-muted">Informations administratives et responsables locaux.</p>
+  <p class="mt-2 text-sm"><a class="underline" href="{% url 'ministry:policies' %}">Configurer les taux financiers par type d’offrande</a></p>
 </div>
 <form method="post" enctype="multipart/form-data" class="deco-card p-6">
   {% csrf_token %}

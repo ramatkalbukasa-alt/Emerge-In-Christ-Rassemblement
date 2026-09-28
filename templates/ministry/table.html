@@ -1,0 +1,19 @@
+{% extends "ministry/base.html" %}
+{% block ministry_content %}
+<header class="mb-6"><p class="deco-kicker">Registres & rapports</p><h1 class="deco-heading mt-2">{{ title }}</h1><p class="mt-3 text-fg-muted">{{ subtitle }}</p></header>
+<div class="ministry-actions mb-5">
+  {% for label, url in actions %}<a class="btn-primary" href="{{ url }}">{{ label }}</a>{% endfor %}
+  <a class="btn-secondary" href="?{{ query }}&amp;export=pdf">Exporter PDF</a><a class="btn-secondary" href="?{{ query }}&amp;export=xlsx">Exporter Excel</a>
+</div>
+{% if form %}<form method="get" class="deco-card p-5 mb-6 ministry-filters" aria-label="Filtres du rapport">{% include "ministry/fields.html" %}<div class="ministry-actions mt-4"><button class="btn-primary" type="submit">Appliquer les filtres</button><a class="btn-secondary" href="{{ request.path }}">Réinitialiser</a></div></form>{% endif %}
+{% if totals %}<dl class="ministry-totals mb-5">{% for label, amount in totals %}<div class="deco-card p-5"><dt class="text-sm text-fg-muted">{{ label }}</dt><dd class="text-2xl font-semibold mt-2">{{ amount }}</dd></div>{% endfor %}</dl>{% endif %}
+{% if note %}<p class="ministry-note mb-4">{{ note }}</p>{% endif %}
+<section class="deco-card" aria-label="Résultats">
+  <div class="ministry-table-scroll" tabindex="0" role="region" aria-label="Tableau défilant : {{ title }}">
+    <table class="ministry-table"><caption class="sr-only">{{ title }} — {{ subtitle }}</caption><thead><tr>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}<th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody>{% for row in page %}<tr>{% for cell in row.cells %}<td>{{ cell|default_if_none:'' }}</td>{% endfor %}<td>{% if row.url %}<a class="ministry-link" href="{{ row.url }}">{{ row.link_label }}</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="20"><p class="py-8 text-center text-fg-muted">Aucun résultat pour ces critères. Ajoutez un enregistrement ou ajustez les filtres.</p></td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+<nav class="ministry-actions mt-5" aria-label="Pagination">{% if page.has_previous %}<a class="btn-secondary" href="?{{ query }}&amp;page={{ page.previous_page_number }}">Précédent</a>{% endif %}<span>Page {{ page.number }} sur {{ page.paginator.num_pages }} · {{ page.paginator.count }} lignes</span>{% if page.has_next %}<a class="btn-secondary" href="?{{ query }}&amp;page={{ page.next_page_number }}">Suivant</a>{% endif %}</nav>
+{% endblock %}

@@ -9,6 +9,8 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.EXTENSION)
+    function = models.CharField("Fonction dans l’extension", max_length=20, blank=True,
+        choices=[("secretary", "Secrétaire"), ("coordinator", "Coordonnateur"), ("treasurer", "Trésorier")])
     extension = models.ForeignKey(
         "churches.ChurchExtension",
         on_delete=models.SET_NULL,

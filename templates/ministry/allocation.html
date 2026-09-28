@@ -1,0 +1,22 @@
+{% extends "ministry/base.html" %}
+{% block ministry_content %}
+<header class="mb-6"><p class="deco-kicker">{{ allocation.extension }} · {{ allocation.report.service_date|date:'d/m/Y' }}</p><h1 class="deco-heading mt-2">{{ allocation.get_fund_display }}</h1><p class="mt-3">{{ allocation.beneficiary|default:'Bénéficiaire à renseigner lors de la remise' }}</p></header>
+<dl class="ministry-totals mb-6"><div class="deco-card p-5"><dt>Affecté</dt><dd class="text-2xl font-semibold">{{ allocation.amount }} {{ allocation.currency.code }}</dd></div><div class="deco-card p-5"><dt>Remis</dt><dd class="text-2xl font-semibold">{{ paid }} {{ allocation.currency.code }}</dd></div><div class="deco-card p-5"><dt>Reste à remettre</dt><dd class="text-2xl font-semibold">{{ remaining }} {{ allocation.currency.code }}</dd></div></dl>
+<section class="deco-card p-6 mb-6">
+  <h2 class="font-semibold text-lg mb-4">Répartition entre bénéficiaires</h2>
+  {% for share in shares %}
+    <article class="ministry-entry"><h3>{{ share.beneficiary }} : {{ share.amount }} {{ allocation.currency.code }}</h3>
+      <p>Remis : {{ share.paid_amount }} · Reste : {{ share.remaining_amount }} {{ allocation.currency.code }}</p>
+      {% if can_split %}<form method="post" action="{% url 'ministry:delete_share' share.pk %}">{% csrf_token %}<button class="btn-secondary" type="submit">Retirer cette part</button></form>{% endif %}
+    </article>
+  {% empty %}<p>Une seule part pour le bénéficiaire désigné, sauf répartition ci-dessous.</p>{% endfor %}
+  {% if can_split %}<details class="mt-4" {% if share_form.errors %}open{% endif %}><summary>Répartir entre plusieurs bénéficiaires</summary>
+    <form method="post" class="mt-4">{% csrf_token %}<input type="hidden" name="action" value="share">
+      <p class="ministry-note mb-4">Répartissez la totalité avant la première remise. Montants en {{ allocation.currency.code }}.</p>
+      {% include "ministry/fields.html" with form=share_form %}<button class="btn-secondary mt-4" type="submit">Ajouter cette part</button>
+    </form>
+  </details>{% endif %}
+</section>
+<form method="post" class="deco-card p-6 mb-6">{% csrf_token %}<h2 class="font-semibold text-lg mb-4">Enregistrer une remise</h2><p class="ministry-note mb-4">Montant dans la devise remise choisie, par défaut {{ allocation.currency.code }}. L’équivalent déduit et le taux de conversion sont conservés. Plusieurs remises partielles sont possibles.</p>{% include "ministry/fields.html" %}<button class="btn-primary mt-5" type="submit">Enregistrer la remise</button></form>
+<section class="deco-card p-6"><h2 class="font-semibold text-lg mb-4">Historique des remises</h2>{% for payment in payments %}<article class="ministry-entry"><h3>{{ payment.date|date:'d/m/Y' }} — {{ payment.original_amount }} {{ payment.currency.code }} — {{ payment.beneficiary }}</h3><p>Imputé : {{ payment.amount }} {{ allocation.currency.code }} · Taux : {{ payment.exchange_rate }}</p><p>{{ payment.reference }}</p>{% if payment.cancelled_at %}<p>Annulée : {{ payment.cancellation_reason }}</p>{% else %}<details><summary>Annuler cette remise</summary><form method="post" action="{% url 'ministry:cancel_payment' payment.pk %}" class="mt-3">{% csrf_token %}<label for="reason-{{ payment.pk }}">Motif obligatoire</label><input class="form-control" id="reason-{{ payment.pk }}" name="reason" maxlength="300" required><button class="btn-secondary mt-3" type="submit">Confirmer l’annulation</button></form></details>{% endif %}</article>{% empty %}<p class="text-fg-muted">Aucune remise effectuée.</p>{% endfor %}</section>
+{% endblock %}

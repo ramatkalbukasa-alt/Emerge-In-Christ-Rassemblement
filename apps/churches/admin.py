@@ -31,6 +31,7 @@ class CurrencyAdmin(admin.ModelAdmin):
 
 @admin.register(ChurchExtension)
 class ChurchExtensionAdmin(admin.ModelAdmin):
+    readonly_fields = ("tithe_percentage", "social_percentage")
     list_display = ("name", "city", "country", "pastor_name", "currency", "tithe_percentage", "social_percentage", "is_active")
     list_filter = ("is_active", "country", "currency")
     prepopulated_fields = {"slug": ("name",)}
@@ -52,9 +53,8 @@ class ChurchExtensionAdmin(admin.ModelAdmin):
         ("Paramètres financiers", {
             "fields": ("tithe_percentage", "social_percentage"),
             "description": (
-                "Ces pourcentages s'appliquent aux offrandes ordinaires, aux dîmes et aux actions de grâce. "
-                "Les offrandes pour l'orateur ne subissent aucun prélèvement. "
-                "Les modifications n'affectent pas les rapports déjà enregistrés."
+                "Paramètres historiques conservés en lecture seule. Les nouveaux taux par catégorie "
+                "se configurent dans Gestion > Taux et règles."
             ),
         }),
     )

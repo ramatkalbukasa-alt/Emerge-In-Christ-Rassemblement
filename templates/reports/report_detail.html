@@ -205,6 +205,20 @@
 </div>
 
 <!-- ───── Infos Culte ───── -->
+{% if report.financial_version >= 2 %}
+<section class="deco-card mt-6 p-6">
+  <h2 class="font-display text-lg mb-3">Répartition et destinations</h2>
+  <p class="text-sm mb-3">Taux figés (dîme / social) : ordinaires {{ report.financial_snapshot.regular_tithe }} % / {{ report.financial_snapshot.regular_social }} % ; dîmes reçues {{ report.financial_snapshot.tithe_tithe }} % / {{ report.financial_snapshot.tithe_social }} % ; actions de grâce {{ report.financial_snapshot.thanks_tithe }} % / {{ report.financial_snapshot.thanks_social }} %.</p>
+  <p class="text-sm text-fg-muted mb-4">Le solde disponible correspond à la caisse de l’extension après les dépenses du culte. Les parts ci-dessous sont affectées séparément ; les remises sont suivies dans les caisses.</p>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><p>Pasteur — dîmes nettes</p><strong>{{ ventilation.dimes.reste }} {{ report_currency.code }}</strong></div>
+    <div><p>Actions de grâce — {{ report.thanksgiving_beneficiary|default:'Bénéficiaire à renseigner' }}</p><strong>{{ ventilation.actions_grace.reste }} {{ report_currency.code }}</strong></div>
+    <div><p>Orateur — {{ report.preacher|default:'À renseigner' }}</p><strong>{{ ventilation.orateur.reste }} {{ report_currency.code }}</strong></div>
+    <div><p>Offrandes ordinaires après prélèvements</p><strong>{{ ventilation.ordinaires.reste }} {{ report_currency.code }}</strong></div>
+  </div>
+  <a class="btn-secondary mt-4" href="{% url 'ministry:funds' 'pastor' %}">Consulter les caisses et remises</a>
+</section>
+{% endif %}
 {% if report.scripture_text or report.moderator or report.interpreter %}
 <section class="deco-card mt-6 p-6">
   <div class="border-b border-black/[0.06] pb-4 mb-4">

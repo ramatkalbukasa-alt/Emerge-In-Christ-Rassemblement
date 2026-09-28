@@ -1,0 +1,25 @@
+{% load report_extras %}
+<nav class="ministry-nav" aria-label="Gestion de l’extension">
+  <a href="{% url 'ministry:people' %}">Personnes</a>
+  <a href="{% url 'ministry:workers' %}">Ouvriers</a>
+  <a href="{% url 'ministry:departments' %}">Départements</a>
+  <a href="{% url 'ministry:events' 'visit' %}">Nouveaux venus</a>
+  <a href="{% url 'ministry:events' 'conversion' %}">Âmes gagnées</a>
+  <details><summary>Rapports financiers</summary><div>
+    <a href="{% url 'ministry:financial' 'dimes' %}">Dîmes reçues</a>
+    <a href="{% url 'ministry:financial' 'social' %}">Social</a>
+    <a href="{% url 'ministry:financial' 'ordinaires' %}">Offrandes ordinaires</a>
+    <a href="{% url 'ministry:financial' 'actions_grace' %}">Actions de grâce</a>
+    <a href="{% url 'ministry:financial' 'orateur' %}">Offrandes pour l’orateur</a>
+    {% if user|application_admin %}<a href="{% url 'ministry:financial' 'tithe' %}">Dîmes des dîmes</a>{% endif %}
+  </div></details>
+  <details><summary>Caisses et remises</summary><div>
+    <a href="{% url 'ministry:funds' 'pastor' %}">Caisse du pasteur</a>
+    <a href="{% url 'ministry:funds' 'beneficiary' %}">Bénéficiaires</a>
+    <a href="{% url 'ministry:funds' 'extension' %}">Caisse de l’extension</a>
+    <a href="{% url 'ministry:funds' 'social' %}">Social</a>
+    <a href="{% url 'ministry:remittances' %}">Registre des remises</a>
+    {% if user|application_admin %}<a href="{% url 'ministry:funds' 'tithe' %}">Dîmes des dîmes</a>{% endif %}
+  </div></details>
+  {% if user|application_admin %}<a href="{% url 'ministry:policies' %}">Taux et règles</a>{% endif %}
+</nav>

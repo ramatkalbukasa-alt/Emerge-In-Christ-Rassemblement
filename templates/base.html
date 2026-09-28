@@ -112,6 +112,13 @@
               </div>
             </div>
 
+            <div class="px-3 pb-3">
+              <p class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-muted mb-2">Registres et caisses</p>
+              <a class="block px-3 py-3 text-sm rounded-lg hover:bg-white/[0.05]" href="{% url 'ministry:people' %}">Personnes et accueil</a>
+              <a class="block px-3 py-3 text-sm rounded-lg hover:bg-white/[0.05]" href="{% url 'ministry:workers' %}">Ouvriers et départements</a>
+              <a class="block px-3 py-3 text-sm rounded-lg hover:bg-white/[0.05]" href="{% url 'ministry:financial' 'dimes' %}">Rapports par type</a>
+              <a class="block px-3 py-3 text-sm rounded-lg hover:bg-white/[0.05]" href="{% url 'ministry:funds' 'pastor' %}">Caisses et remises</a>
+            </div>
             <!-- Rapports Périodiques -->
             <div>
               <div class="flex items-center justify-between px-3 pb-3">

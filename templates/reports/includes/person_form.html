@@ -1,0 +1,6 @@
+<div class="form-row rounded-xl border border-black/10 p-4">
+  {{ entry.non_field_errors }}{% for field in entry.hidden_fields %}{{ field }}{% endfor %}
+  <div class="grid gap-4 sm:grid-cols-2">
+  {% for field in entry.visible_fields %}<div><label class="mb-2 block" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+  </div>
+</div>
