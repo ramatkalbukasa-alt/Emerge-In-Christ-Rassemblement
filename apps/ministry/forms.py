@@ -171,6 +171,12 @@ class FilterForm(forms.Form):
         if "extension" in self.fields:
             ext = user_extension(user)
             self.fields["extension"].queryset = ChurchExtension.objects.all() if user_is_admin(user) else ChurchExtension.objects.filter(pk=ext.pk) if ext else ChurchExtension.objects.none()
+            if user_is_admin(user):
+                self.fields["extension"].empty_label = "Toutes les extensions"
+            else:
+                self.initial["extension"] = ext
+                self.fields["extension"].disabled = True
+                self.fields["extension"].empty_label = None if ext else "Aucune extension attribuée"
         if "department" in self.fields:
             self.fields["department"].queryset = scoped(Department.objects.all(), user)
         style(self)
